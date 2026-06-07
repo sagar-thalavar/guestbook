@@ -1,0 +1,33 @@
+Purpose
+
+This document records the original discussions, ideas, questions, answers, and decisions that led to the creation of Guestbook.
+
+It exists to preserve the project's history and reasoning before implementation.
+
+Original Idea
+Prompt 01
+
+Okay i would like to integrate this feature in the application which is to take a selfie in the application itself and display it to the public in the form of a collage but i am not sure if that willl be professional enough but it shows that i have used a s3 in the portfolio and makeing use of it, not sure if i should add this, i got this idea because i do take selfies in random people phones - people i have met and talked though.
+
+Expanded Idea
+Prompt 02
+
+I was planning it for the sagarthalavar.in page which is a portfolio website, now what i would like to try is that, i would like to do these steps:
+
+Event visitors take a selfie. - they shoudl first login to the page if they have clicked on the page. - that would require a genuine mail and verification(not sure what it is called, would like to read more about it)
+
+The image is uploaded to S3. - visitors will take selfie - the prompt would be to as follows " To see when was the last time you visited my site take a selfie with an expression on how are you feeling today(the moment when they have visited the site) - also we will set a limit of photos per day - per week and per month and per user just so that i would make use of the free plan of the database) - if the limit is reached we can show this message as well.
+
+Metadata is stored in a database. - stored in s3 bucket
+
+Images are moderated/approved. - me who is the admin/owns of the page will now have a regular tasks and should be getting notification on phone - mail - so that i can approve the image because it can't be of any sensitive info or unacceptable photos- i will have a rule which makes sense - wold like to list out now itself, do llist out the protocols that can be listing to approve and that can be written in the github file - i get the notification for approval - let me also know if supabase does sends the notification to me or not - if not we can figure out a way that i could add a mail option myself through other ways. -- another feature would be to also send a message with the reason of rejection if not acception to the person who have logged in the page(i have mentioned in the previous point that they have to login and their mail will be with me)
+
+A public collage or community wall is generated. - instead of this i am only thinking about having a personalised visit book. so that it is also safe for me to avoid unethical intrutions and safely purpose. - i the admin of the page only should have access to those data and i am actually scared about the security of my access - do tell me about the security measures that i would use in this case.
+
+Users can search or filter by event/date. - only the person who has logged in with the same mail will be able to see the photos and visited detials- that photo will only be dispalyed after the approval from the admin- which is me.
+
+Notes: Should i be creating this as a project and adding a /project name after the domain or should i write this in the portfolio repo itself adn then working on it?Suggest me the best way.
+
+Also don't make it very unfriedly with keepign all these things in protocols, i also don't want the users to feel that it's a lot of work and so much hectic to just upload a photo - tell me more about how i can do this.
+
+All these points can be for a project documentation - i will be creating this with phases devided into multiple phases with my own time and improvements and changes.

@@ -1,0 +1,478 @@
+# Guestbook v1.0 Development Roadmap
+
+## Project Information
+
+Project Name: Guestbook
+
+URL:
+sagarthalavar.in/guestbook
+
+Tagline:
+A private record of moments, memories, and visits.
+
+Purpose:
+
+* Personal visitor archive
+* Portfolio project
+* Visitor engagement experience
+
+Backend:
+
+* Separate Supabase Project
+
+Authentication:
+
+* Google Login
+* Email Magic Link Login
+
+---
+
+# Phase 0 – Foundation
+
+## Goal
+
+Create the project foundation and infrastructure before building features.
+
+## Deliverables
+
+* Create GitHub repository
+* Create separate Supabase project
+* Configure environment variables
+* Create project branding
+* Finalize Guestbook documentation
+* Define folder structure
+
+## Completion Criteria
+
+The project is ready for feature development.
+
+---
+
+# Phase 1 – Authentication
+
+## Goal
+
+Allow visitors to securely access Guestbook features.
+
+## Features
+
+### Public Access
+
+Anyone can:
+
+* Visit Guestbook page
+* Read project information
+
+### Protected Access
+
+Login required for:
+
+* Creating entries
+* Viewing personal entries
+* Editing pending entries
+
+### Authentication Methods
+
+* Google Login
+* Email Magic Link Login
+
+### Authentication Notice
+
+Authentication protects your memories.
+
+## Completion Criteria
+
+Users can sign in and access a private dashboard.
+
+---
+
+# Phase 2 – Visitor Dashboard
+
+## Goal
+
+Provide a personal area for authenticated visitors.
+
+## Dashboard Sections
+
+* Approved Entries
+* Pending Review
+* Rejected Entries
+
+## Dashboard Philosophy
+
+Keep the interface simple and personal.
+
+Avoid analytics-heavy designs.
+
+## Completion Criteria
+
+Users can access their own Guestbook history.
+
+---
+
+# Phase 3 – Create Guestbook Entry
+
+## Goal
+
+Allow users to create personal memories.
+
+## Entry Message
+
+Capture a moment from your visit.
+
+Leave a photo and a short message that reflects how you feel today, creating a personal record of your visit.
+
+## Entry Fields
+
+### Required
+
+* Original Name
+
+### Optional
+
+* Selfie
+* Mood
+* One-line Message
+
+### Message Limit
+
+* 200 characters
+
+### Mood
+
+Custom mood supported.
+
+Examples:
+
+* Happy
+* Inspired
+* Curious
+* Excited
+* Reflective
+
+## Completion Criteria
+
+Users can submit entries successfully.
+
+---
+
+# Phase 4 – Submission Rules
+
+## Goal
+
+Protect storage resources and prevent abuse.
+
+## Limits
+
+Per User:
+
+* 1 submission per day
+* 3 submissions per week
+* 10 submissions per month
+* 50 approved entries lifetime
+
+## Limit Message
+
+Display a friendly notice when limits are reached.
+
+## Completion Criteria
+
+Rate limits are enforced.
+
+---
+
+# Phase 5 – Selfie Upload System
+
+## Goal
+
+Allow visitors to capture and upload memories.
+
+## Features
+
+* Camera capture
+* Mobile support
+* Image upload
+* Image preview
+* Replacement upload
+
+## Important Rule
+
+Guestbook entries are selfie-based memories.
+
+Selfie submissions are the official Guestbook entries.
+
+## Completion Criteria
+
+Users can upload images successfully.
+
+---
+
+# Phase 6 – Consent System
+
+## Goal
+
+Ensure visitors understand storage and moderation.
+
+## Required Checkboxes
+
+☐ I understand that my submission will be stored and reviewed before approval.
+
+☐ I consent to storing my photo and message as part of my Guestbook history.
+
+## Completion Criteria
+
+Consent required before submission.
+
+---
+
+# Phase 7 – Moderation Workflow
+
+## Goal
+
+Review all submissions before publication.
+
+## Workflow
+
+Submission
+
+↓
+
+Pending Review
+
+↓
+
+Admin Review
+
+↓
+
+Approved or Rejected
+
+## User Notice
+
+Thank you for your submission.
+
+For privacy and safety reasons, all submissions are reviewed before they become visible in your Guestbook history. You will receive an email notification once your submission has been approved or if any changes are required.
+
+## Completion Criteria
+
+Moderation process operational.
+
+---
+
+# Phase 8 – Admin Dashboard
+
+## Goal
+
+Provide moderation controls.
+
+## Features
+
+### Submission Review
+
+* View submission
+* Approve submission
+* Reject submission
+
+### Search
+
+* Search by email
+* Search by name
+
+### Monitoring
+
+* Audit logs
+* Moderation history
+
+### Export
+
+* Export submission records
+
+## Completion Criteria
+
+Administrator can fully manage entries.
+
+---
+
+# Phase 9 – Rejection Management
+
+## Goal
+
+Handle rejected entries professionally.
+
+## Rejection Reasons
+
+* Unclear Photo
+* Inappropriate Content
+* Image Does Not Show Visitor
+* Duplicate Submission
+* Spam Submission
+* Other
+
+## Custom Reason
+
+Administrator may write a custom reason.
+
+## Re-upload Rules
+
+* Re-upload allowed
+* Maximum 3 attempts
+
+## Completion Criteria
+
+Visitors can replace rejected entries.
+
+---
+
+# Phase 10 – Email Notifications
+
+## Goal
+
+Keep users informed.
+
+## Visitor Emails
+
+### Approval
+
+* Approval confirmation
+* View Guestbook button
+
+### Rejection
+
+* Rejection reason
+* Re-upload button
+
+## Admin Emails
+
+Receive email when:
+
+* New submission arrives
+* Replacement submission arrives
+
+## Completion Criteria
+
+All notification flows operational.
+
+---
+
+# Phase 11 – Entry Status Management
+
+## Pending
+
+* Editable
+
+## Approved
+
+* Locked
+
+## Rejected
+
+* Replacement required
+
+## Completion Criteria
+
+Status rules enforced correctly.
+
+---
+
+# Phase 12 – Privacy Controls
+
+## Visibility Rules
+
+Visitor:
+
+* Can see own entries
+
+Administrator:
+
+* Can see all entries
+
+Public:
+
+* Cannot see entries
+
+## Excluded Features
+
+* Public gallery
+* Community wall
+* Public photo access
+* Visitor directory
+
+## Completion Criteria
+
+Privacy rules fully enforced.
+
+---
+
+# Phase 13 – Data Management
+
+## Approved Entries
+
+Stored indefinitely.
+
+## Rejected Entries
+
+Deleted automatically after 7 days.
+
+## Account Deletion
+
+Deletes:
+
+* Photos
+* Messages
+* Metadata
+* Guestbook records
+
+## Completion Criteria
+
+Retention rules implemented.
+
+---
+
+# Phase 14 – Security
+
+## Requirements
+
+* Authentication
+* Access control
+* Private storage
+* Audit logs
+* Admin action logs
+
+## Logged Actions
+
+* Approval
+* Rejection
+* Deletion
+
+## Completion Criteria
+
+Security model operational.
+
+---
+
+# Phase 15 – Portfolio Integration
+
+## Portfolio Description
+
+Guestbook is a privacy-focused digital visitor journal that allows authenticated visitors to record moments from their visit through photos, moods, and short messages.
+
+The project combines authentication, moderation workflows, cloud storage, notification systems, audit logging, and user privacy controls while maintaining a simple and personal user experience.
+
+## Completion Criteria
+
+Project featured on portfolio.
+
+---
+
+# Future Versions
+
+Not included in Version 1.0:
+
+* Audio memories
+* Video memories
+* Public sharing
+* Community feed
+* Advanced analytics
+* Social features
+
+These remain low-priority until Guestbook v1.0 is stable.

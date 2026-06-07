@@ -1,0 +1,551 @@
+# Guestbook – Requirements Discovery Log
+
+This document records the discussions, decisions, questions, and finalized answers used to define the Guestbook project. It serves as the source of truth for project planning and future development.
+
+---
+
+# Project Concept
+
+## Initial Idea
+
+The project originated from the idea of allowing visitors to take a selfie directly within the application and display it publicly as a collage.
+
+However, after further discussion, the concept evolved into a private and moderated Guestbook experience focused on personal memories rather than a public wall.
+
+The intention is to:
+
+* Demonstrate technical capabilities such as authentication, cloud storage, moderation workflows, notifications, and privacy controls.
+* Create a meaningful archive of visitor memories.
+* Build a portfolio-worthy project with real-world use cases.
+
+---
+
+# Project Identity
+
+## Question
+
+What should the project be called?
+
+### Final Answer
+
+Guestbook
+
+---
+
+## Question
+
+Should this be:
+
+* A feature inside the portfolio?
+* A separate project hosted at a subpath?
+* A separate domain?
+
+### Final Answer
+
+A separate project hosted at:
+
+`/guestbook`
+
+A dedicated Supabase project will also be created specifically for Guestbook.
+
+---
+
+## Question
+
+What is the primary goal?
+
+### Final Answer
+
+All three:
+
+* Personal archive of visitors
+* Portfolio project demonstrating technical skills
+* Visitor engagement experience
+
+---
+
+# Authentication
+
+## Question
+
+Do you want:
+
+* Google Login only?
+* Email Magic Link only?
+* Both?
+
+### Final Answer
+
+Both.
+
+---
+
+## Question
+
+Can anonymous visitors browse the project page before login?
+
+### Final Answer
+
+Yes.
+
+Emails and authentication are only required for Guestbook functionality.
+
+---
+
+## Question
+
+Should login be required before taking a selfie?
+
+### Final Answer
+
+Yes.
+
+The selfie feature should only be available after login.
+
+---
+
+## Authentication Notice
+
+### Finalized Text
+
+Authentication protects your memories.
+
+---
+
+# Visitor Experience
+
+## Question
+
+What should visitors see first?
+
+### Original Draft
+
+Leave a memory of your visit today with an expression of what you feel.
+
+### Finalized Version
+
+Capture a moment from your visit.
+
+Leave a photo and a short message that reflects how you feel today, creating a personal record of your visit.
+
+---
+
+## Question
+
+Should a selfie be mandatory or optional?
+
+### Final Answer
+
+Optional.
+
+---
+
+## Question
+
+What information can visitors submit?
+
+### Final Answer
+
+* Original Name
+* One-line Message
+* Optional Selfie
+* Optional Mood
+
+---
+
+## Question
+
+Can users edit submissions?
+
+### Final Answer
+
+Yes.
+
+However:
+
+* Pending Submission → Editable
+* Approved Submission → Locked
+* Rejected Submission → Re-upload Required
+
+---
+
+# Data Collection
+
+## Question
+
+What information should be stored?
+
+### Final Answer
+
+Only essential information:
+
+* Name
+* Email
+* Date
+* Time
+* Mood
+* Message
+* Submission Status
+* Uploaded Image
+
+Avoid unnecessary personal data.
+
+---
+
+## Question
+
+Should visitors see visit history?
+
+### Final Answer
+
+Yes.
+
+Visitors should be able to see their Guestbook history.
+
+---
+
+## Question
+
+Should every website visit create an entry?
+
+### Final Answer
+
+No.
+
+Only Guestbook submissions create entries.
+
+Browsing the website alone is not considered a Guestbook visit.
+
+---
+
+# Moderation
+
+## Question
+
+What moderation workflow should be used?
+
+### Final Answer
+
+Submission
+
+↓
+
+Pending Review
+
+↓
+
+Admin Review
+
+↓
+
+Approved or Rejected
+
+---
+
+## User Notice
+
+### Finalized Text
+
+Thank you for your submission.
+
+For privacy and safety reasons, all submissions are reviewed before they become visible in your Guestbook history. You will receive an email notification once your submission has been approved or if any changes are required.
+
+---
+
+## Question
+
+What happens when a submission is rejected?
+
+### Final Answer
+
+The user receives:
+
+* A rejection email
+* The reason for rejection
+* A link to re-upload
+
+Replacement uploads are preferred over creating entirely new entries.
+
+---
+
+## Question
+
+How many re-upload attempts are allowed?
+
+### Final Answer
+
+Maximum 3 attempts.
+
+---
+
+# Privacy
+
+## Question
+
+Who should be able to see uploaded photos?
+
+### Final Answer
+
+Only:
+
+* The visitor who uploaded them
+* The administrator
+
+No public access.
+
+---
+
+## Question
+
+Can visitors download approved photos?
+
+### Final Answer
+
+Yes.
+
+A download icon should be available.
+
+---
+
+## Question
+
+Can visitors delete their own data?
+
+### Final Answer
+
+Yes.
+
+---
+
+# Notifications
+
+## Question
+
+How should notifications be delivered?
+
+### Final Answer
+
+Email only.
+
+---
+
+## Question
+
+Should users receive approval and rejection notifications?
+
+### Final Answer
+
+Yes.
+
+If there is no significant cost involved, both should be sent.
+
+---
+
+# Data Retention
+
+## Question
+
+How long should rejected submissions be kept?
+
+### Final Answer
+
+Rejected entries should be automatically deleted after 7 days.
+
+---
+
+## Question
+
+How long should approved submissions be stored?
+
+### Final Answer
+
+Store indefinitely for Version 1.0.
+
+---
+
+# Logging
+
+## Question
+
+Should audit logs be maintained?
+
+### Final Answer
+
+Yes.
+
+Examples:
+
+* Uploaded
+* Approved
+* Viewed
+* Deleted
+
+---
+
+## Question
+
+Should administrator actions be logged?
+
+### Final Answer
+
+Yes.
+
+Examples:
+
+* Approved by Administrator
+* Rejected by Administrator
+* Deleted by Administrator
+
+---
+
+# Portfolio Integration
+
+## Question
+
+How should the project appear in the portfolio?
+
+### Final Answer
+
+A detailed project explanation is preferred.
+
+The project should demonstrate:
+
+* Authentication
+* Cloud Storage
+* Security
+* Moderation
+* Notifications
+* Privacy Controls
+* Audit Logging
+
+Screenshots are optional.
+
+The explanation is more important.
+
+---
+
+# Mood Feature
+
+## Question
+
+Should moods be fixed or custom?
+
+### Final Answer
+
+Custom moods should be supported.
+
+---
+
+# Message Length
+
+## Question
+
+Maximum message length?
+
+### Final Answer
+
+200 characters.
+
+---
+
+# Submission Limits
+
+## Question
+
+What submission limits should be enforced?
+
+### Final Answer
+
+Per User:
+
+* 1 submission per day
+* 3 submissions per week
+* 10 submissions per month
+
+---
+
+## Additional Decision
+
+Maximum approved entries:
+
+* 50 approved entries per user
+
+---
+
+# Consent Requirements
+
+## Finalized Consent Statements
+
+☐ I understand that my submission will be stored and reviewed before approval.
+
+☐ I consent to storing my photo and message as part of my Guestbook history.
+
+---
+
+# Dashboard
+
+## Question
+
+Should the dashboard be analytics-heavy?
+
+### Final Answer
+
+No.
+
+The project should remain personal rather than analytical.
+
+Dashboard sections:
+
+* Approved Entries
+* Pending Review
+* Rejected Entries
+
+---
+
+# Rejection Reasons
+
+## Standard Reasons
+
+* Unclear Photo
+* Inappropriate Content
+* Image Does Not Show Visitor
+* Duplicate Submission
+* Spam Submission
+* Other
+
+---
+
+## Additional Decision
+
+Administrators should also be able to enter a custom rejection reason.
+
+---
+
+# Guestbook Tagline
+
+## Final Answer
+
+A private record of moments, memories, and visits.
+
+---
+
+# Future Features
+
+These are intentionally postponed until after Version 1.0:
+
+* Audio Memories
+* Video Memories
+* Public Sharing
+* Community Feed
+* Advanced Analytics
+* Social Features
+
+These remain low-priority until the core Guestbook experience is complete.
+
+---
+
+# Final Vision Statement
+
+Guestbook is a privacy-focused digital visitor journal that allows authenticated visitors to record moments from their visit through photos, moods, and short messages.
+
+The project combines authentication, moderation workflows, cloud storage, notification systems, audit logging, and user privacy controls while maintaining a simple, personal, and secure user experience.

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Elements -->
+  <title>Guestbook — A Private Archive of Visits, Memories, and Moments</title>
+  <meta name="description" content="Capture your memories, feelings, and selfies during your visit. Guestbook is a private visitor archive to record personal moments securely.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="/src/css/main.css">
+</head>
+<body>
+  <!-- Main Container -->
+  <div id="app-root">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-container">
+        <img src="/src/assets/logo.svg" alt="Guestbook Logo" class="app-logo" id="app-logo-img">
+        <span class="logo-text">Guestbook</span>
+      </div>
+      <nav class="app-nav" id="main-navigation">
+        <!-- Navigation will be dynamically populated based on Auth State -->
+        <span class="nav-status-indicator" id="auth-status-indicator">Connecting...</span>
+      </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main id="main-content">
+      <section class="hero-section" id="hero-welcome">
+        <h1 class="hero-title">A private record of moments, memories, and visits.</h1>
+        <p class="hero-subtitle">Capture your visit with a photo, a mood, and a short message to create an everlasting memory.</p>
+        
+        <div class="cta-container">
+          <button id="btn-login-redirect" class="btn btn-primary">Sign In to Leave a Entry</button>
+          <a href="#about-project" class="btn btn-secondary">Learn More</a>
+        </div>
+      </section>
+
+      <section class="about-section" id="about-project">
+        <h2>About Guestbook</h2>
+        <p>Guestbook is a private, visitor-focused digital journal. Your entries, selfies, and moods are kept secure, moderated for privacy, and stored as an archive of your connection with us.</p>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>&copy; 2026 Guestbook. All rights reserved.</p>
+      <a href="https://sagarthalavar.in/guestbook" target="_blank" rel="noopener noreferrer" id="footer-project-link">sagarthalavar.in/guestbook</a>
+    </footer>
+  </div>
+
+  <!-- Entry Script -->
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
