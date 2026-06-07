@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/guestbook", "destination": "/index.html" },
+    { "source": "/guestbook/", "destination": "/index.html" },
+    { "source": "/guestbook/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/guestbook/:path*", "destination": "/:path*" }
+  ]
+}
