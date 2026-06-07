@@ -42,7 +42,44 @@ async function getSignedSelfieUrl(filePath: string) {
   return data.signedUrl;
 }
 
+/**
+ * Create a new guestbook entry in the database.
+ */
+async function createGuestbookEntry(name: string, message: string, mood: string | null, consentGiven: boolean) {
+  if (!supabase) {
+    throw new Error('Supabase client is not configured.');
+  }
+
+  // Retrieve current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('User session not found. Please sign in again.');
+  }
+
+  const { data, error } = await supabase
+    .from('guestbook_entries')
+    .insert([
+      {
+        user_id: user.id,
+        original_name: name,
+        message,
+        mood,
+        consent_given: consentGiven,
+        status: 'pending' // always created as pending review
+      }
+    ] as any)
+    .select();
+
+  if (error) {
+    console.error('Error creating guestbook entry:', error);
+    throw error;
+  }
+
+  return data ? data[0] : null;
+}
+
 export {
   fetchUserEntries,
-  getSignedSelfieUrl
+  getSignedSelfieUrl,
+  createGuestbookEntry
 };

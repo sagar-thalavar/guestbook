@@ -4,14 +4,16 @@ import { fetchUserEntries, getSignedSelfieUrl } from './db/queries';
 /**
  * Hides all main view sections and shows only the targeted view.
  */
-async function showView(viewName: 'welcome' | 'login' | 'dashboard', user?: any) {
+async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-entry', user?: any) {
   const welcomeSection = document.getElementById('hero-welcome');
   const loginSection = document.getElementById('login-panel');
   const dashboardSection = document.getElementById('dashboard-panel');
+  const createEntrySection = document.getElementById('create-entry-panel');
 
   if (welcomeSection) welcomeSection.style.display = 'none';
   if (loginSection) loginSection.style.display = 'none';
   if (dashboardSection) dashboardSection.style.display = 'none';
+  if (createEntrySection) createEntrySection.style.display = 'none';
 
   if (viewName === 'welcome' && welcomeSection) {
     welcomeSection.style.display = 'block';
@@ -28,6 +30,39 @@ async function showView(viewName: 'welcome' | 'login' | 'dashboard', user?: any)
     
     // Trigger dashboard loading
     await loadUserDashboard();
+  } else if (viewName === 'create-entry' && createEntrySection) {
+    createEntrySection.style.display = 'block';
+    resetCreateEntryForm();
+  }
+}
+
+/**
+ * Resets the Guestbook Entry creation form controls and counters.
+ */
+function resetCreateEntryForm() {
+  const form = document.getElementById('form-create-entry') as HTMLFormElement;
+  if (!form) return;
+  
+  form.reset();
+
+  const charCounter = document.getElementById('char-counter');
+  if (charCounter) {
+    charCounter.textContent = '0 / 200';
+    charCounter.className = 'char-counter-text';
+  }
+
+  const customMoodInput = document.getElementById('input-entry-custom-mood') as HTMLInputElement;
+  if (customMoodInput) {
+    customMoodInput.style.display = 'none';
+    customMoodInput.value = '';
+  }
+
+  const moodPills = document.querySelectorAll('.mood-pill');
+  moodPills.forEach(pill => pill.classList.remove('active'));
+
+  const submitBtn = document.getElementById('btn-submit-entry') as HTMLButtonElement;
+  if (submitBtn) {
+    submitBtn.disabled = true;
   }
 }
 

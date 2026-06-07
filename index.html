@@ -30,7 +30,7 @@
       <div class="app-nav" id="main-navigation">
         <span class="nav-status-indicator" id="auth-status-indicator">Connecting...</span>
         
-        <!-- User Profile Nav Container (shown when logged in) -->
+        <!-- User Profile Nav Container -->
         <div id="nav-user-profile" style="display: none; align-items: center; gap: 12px;">
           <span id="nav-user-email" class="nav-user-email-text"></span>
           <button id="btn-nav-signout" class="nav-signout-btn">Sign Out</button>
@@ -73,7 +73,7 @@
         </div>
       </section>
 
-      <!-- VIEW 2: Login Interface (hidden by default) -->
+      <!-- VIEW 2: Login Interface -->
       <section class="panel glass projects-panel animate-fade-in" id="login-panel" style="display: none;">
         <div class="section-header">
           <div class="section-title-group">
@@ -116,7 +116,7 @@
         </div>
       </section>
 
-      <!-- VIEW 3: Visitor Dashboard (hidden by default) -->
+      <!-- VIEW 3: Visitor Dashboard -->
       <section class="panel glass projects-panel animate-fade-in" id="dashboard-panel" style="display: none;">
         <div class="dashboard-header-block">
           <div class="section-title-group">
@@ -132,7 +132,6 @@
           <p class="section-subtitle">Manage your personal visitor logs and records.</p>
         </div>
 
-        <!-- Dashboard Subsections (Stubs for Phase 2) -->
         <div class="dashboard-sections-grid">
           <!-- Create Entry CTA -->
           <div class="dashboard-action-card glass">
@@ -149,6 +148,70 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- VIEW 4: Create Guestbook Entry (hidden by default) -->
+      <section class="panel glass projects-panel animate-fade-in" id="create-entry-panel" style="display: none;">
+        <div class="section-header">
+          <div class="section-title-group">
+            <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            <h2>Leave a Memory</h2>
+          </div>
+          <p class="section-subtitle">Capture a moment from your visit. Tell us how you feel today.</p>
+        </div>
+
+        <form id="form-create-entry" class="entry-form">
+          <!-- Original Name (Required) -->
+          <div class="form-group">
+            <label for="input-entry-name">Your Name *</label>
+            <input type="text" id="input-entry-name" class="form-input" placeholder="Enter your name" required>
+          </div>
+
+          <!-- Mood Selector (Optional) -->
+          <div class="form-group">
+            <label>How are you feeling today?</label>
+            <div class="mood-selection-container" id="mood-pills-wrapper">
+              <button type="button" class="mood-pill" data-mood="😊 Happy">😊 Happy</button>
+              <button type="button" class="mood-pill" data-mood="🎨 Inspired">🎨 Inspired</button>
+              <button type="button" class="mood-pill" data-mood="🔍 Curious">🔍 Curious</button>
+              <button type="button" class="mood-pill" data-mood="⚡ Excited">⚡ Excited</button>
+              <button type="button" class="mood-pill" data-mood="🧘 Reflective">🧘 Reflective</button>
+              <button type="button" class="mood-pill" id="mood-pill-custom" data-mood="custom">✍️ Custom...</button>
+            </div>
+            <!-- Custom Mood Input (hidden by default) -->
+            <input type="text" id="input-entry-custom-mood" class="form-input custom-mood-input animate-fade-in" placeholder="Type your custom mood (e.g. Creative)" style="display: none; margin-top: 10px;" maxlength="30">
+          </div>
+
+          <!-- Message (Optional) -->
+          <div class="form-group">
+            <div class="message-label-group">
+              <label for="input-entry-message">Message (max 200 characters)</label>
+              <span id="char-counter" class="char-counter-text">0 / 200</span>
+            </div>
+            <textarea id="input-entry-message" class="form-input form-textarea" placeholder="Leave a short message that reflects how you feel today..." maxlength="200"></textarea>
+          </div>
+
+          <!-- Consent Checkboxes (Required before submit) -->
+          <div class="form-group form-checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="checkbox-consent-moderation" required>
+              <span class="checkbox-text">I understand that my submission will be stored and reviewed before approval.</span>
+            </label>
+            <label class="checkbox-label" style="margin-top: 8px;">
+              <input type="checkbox" id="checkbox-consent-storage" required>
+              <span class="checkbox-text">I consent to storing my photo and message as part of my Guestbook history.</span>
+            </label>
+          </div>
+
+          <!-- Submit Actions -->
+          <div class="form-actions-row">
+            <button type="submit" id="btn-submit-entry" class="btn-primary" disabled>Submit Entry</button>
+            <button type="button" id="btn-cancel-entry" class="btn-secondary">Cancel</button>
+          </div>
+        </form>
       </section>
 
       <!-- Static Detail Section -->
