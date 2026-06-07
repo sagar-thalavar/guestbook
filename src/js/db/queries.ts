@@ -354,20 +354,27 @@ async function replaceGuestbookEntry(
     throw new Error('Supabase client is not configured.');
   }
 
-  // 1. Fetch current entry to get current reupload_attempts count
+  // 1. Fetch current entry to get current reupload_attempts count and status
   const { data: currentEntry, error: fetchError } = await (supabase
     .from('guestbook_entries') as any)
-    .select('reupload_attempts')
+    .select('reupload_attempts, status')
     .eq('id', entryId)
     .single();
 
   if (fetchError || !currentEntry) {
-    throw new Error('Failed to retrieve entry details for replacement.');
+    throw new Error('Failed to retrieve entry details for replacement/editing.');
   }
 
-  const nextAttempts = (currentEntry.reupload_attempts || 0) + 1;
-  if (nextAttempts > 3) {
-    throw new Error('Maximum replacement attempts exceeded (max 3).');
+  if (currentEntry.status === 'approved') {
+    throw new Error('Approved entries are locked and cannot be edited.');
+  }
+
+  let nextAttempts = currentEntry.reupload_attempts || 0;
+  if (currentEntry.status === 'rejected') {
+    nextAttempts = nextAttempts + 1;
+    if (nextAttempts > 3) {
+      throw new Error('Maximum replacement attempts exceeded (max 3).');
+    }
   }
 
   // 2. Retrieve user details for path construction
@@ -406,6 +413,60 @@ async function replaceGuestbookEntry(
   return data ? data[0] : null;
 }
 
+/**
+ * Permanently deletes the logged-in user's account, including all their entry rows,
+ * profile, and uploaded selfies from storage.
+ */
+async function deleteUserAccount() {
+  if (!supabase) {
+    throw new Error('Supabase client is not configured.');
+  }
+
+  // 1. Get current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('User session not found.');
+  }
+
+  // 2. Fetch all user entries to find their selfies
+  const { data: entries, error: entriesError } = await (supabase
+    .from('guestbook_entries') as any)
+    .select('selfie_url')
+    .eq('user_id', user.id);
+
+  if (entriesError) {
+    console.error('Error fetching user entries for deletion:', entriesError);
+  }
+
+  // 3. Delete selfies from storage
+  if (entries && entries.length > 0) {
+    const filePaths = entries
+      .map((e: any) => e.selfie_url)
+      .filter((url: any): url is string => !!url);
+
+    if (filePaths.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from('selfies')
+        .remove(filePaths);
+
+      if (storageError) {
+        console.error('Error deleting user selfies from storage:', storageError);
+        // We continue anyway, because deleting the account database records is critical
+      }
+    }
+  }
+
+  // 4. Call delete_own_user_account RPC
+  const { error: rpcError } = await supabase.rpc('delete_own_user_account');
+  if (rpcError) {
+    console.error('Error calling delete_own_user_account RPC:', rpcError);
+    throw rpcError;
+  }
+
+  // 5. Sign out to clear session
+  await supabase.auth.signOut();
+}
+
 export {
   fetchUserEntries,
   getSignedSelfieUrl,
@@ -416,5 +477,6 @@ export {
   moderateGuestbookEntry,
   deleteGuestbookEntry,
   fetchAuditLogs,
-  replaceGuestbookEntry
+  replaceGuestbookEntry,
+  deleteUserAccount
 };

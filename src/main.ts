@@ -8,7 +8,8 @@ import {
 import { 
   createGuestbookEntry, 
   isCurrentUserAdmin,
-  replaceGuestbookEntry
+  replaceGuestbookEntry,
+  deleteUserAccount
 } from './js/db/queries';
 import { 
   showView, 
@@ -203,6 +204,38 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCancelEntry.addEventListener('click', () => {
       resetCameraUI();
       showView('dashboard', currentUser);
+    });
+  }
+
+  // Delete Account Action
+  const btnDeleteAccount = document.getElementById('btn-delete-account') as HTMLButtonElement;
+  if (btnDeleteAccount) {
+    btnDeleteAccount.addEventListener('click', async () => {
+      const confirmFirst = confirm(
+        'Are you absolutely sure you want to delete your Guestbook account?\n\nThis will permanently delete all your guestbook entries, uploaded photos, and profile logs. This action cannot be undone.'
+      );
+      if (!confirmFirst) return;
+
+      const confirmText = prompt(
+        "To confirm deletion, please type 'DELETE' in the input box below:"
+      );
+      if (confirmText !== 'DELETE') {
+        alert('Account deletion cancelled. Confirmation phrase did not match.');
+        return;
+      }
+
+      try {
+        btnDeleteAccount.disabled = true;
+        btnDeleteAccount.textContent = 'Deleting Account...';
+        
+        await deleteUserAccount();
+        alert('Your account and all associated data have been permanently deleted. Thank you for your visit.');
+      } catch (err: any) {
+        console.error('Failed to delete account:', err);
+        alert(`Failed to delete account: ${err.message || 'Unknown database error'}`);
+        btnDeleteAccount.disabled = false;
+        btnDeleteAccount.textContent = 'Delete My Account';
+      }
     });
   }
 
@@ -500,15 +533,20 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const replacementIdInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
         const replacementId = replacementIdInput ? replacementIdInput.value : '';
+        const mode = replacementIdInput ? replacementIdInput.dataset.mode : '';
 
         if (btnSubmitEntry) {
           btnSubmitEntry.disabled = true;
-          btnSubmitEntry.textContent = 'Submitting...';
+          btnSubmitEntry.textContent = mode === 'edit' ? 'Saving...' : 'Submitting...';
         }
 
         if (replacementId) {
           await replaceGuestbookEntry(replacementId, name, message, finalMood, activeSelfieBlob);
-          alert('Your replacement entry was successfully submitted and is pending review!');
+          if (mode === 'edit') {
+            alert('Your entry was successfully updated!');
+          } else {
+            alert('Your replacement entry was successfully submitted and is pending review!');
+          }
         } else {
           await createGuestbookEntry(name, message, finalMood, true, activeSelfieBlob);
           alert('Your entry was successfully submitted and is pending review!');
@@ -523,8 +561,14 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally {
         if (btnSubmitEntry) {
           const replacementIdInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
-          const isReplacement = replacementIdInput && replacementIdInput.value !== '';
-          btnSubmitEntry.textContent = isReplacement ? 'Submit Replacement' : 'Submit Entry';
+          const mode = replacementIdInput ? replacementIdInput.dataset.mode : '';
+          if (mode === 'edit') {
+            btnSubmitEntry.textContent = 'Save Changes';
+          } else if (mode === 'replace') {
+            btnSubmitEntry.textContent = 'Submit Replacement';
+          } else {
+            btnSubmitEntry.textContent = 'Submit Entry';
+          }
           validateConsentState();
         }
       }

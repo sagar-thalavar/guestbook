@@ -60,7 +60,10 @@ function resetCreateEntryForm() {
 
   // Reset replacement-specific form state and headers
   const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
-  if (replacementInput) replacementInput.value = '';
+  if (replacementInput) {
+    replacementInput.value = '';
+    replacementInput.dataset.mode = '';
+  }
 
   const title = document.getElementById('create-entry-title');
   if (title) title.textContent = 'Leave a Memory';
@@ -340,6 +343,11 @@ function createEntryCard(entry: any): HTMLElement {
             Replace Submission (${entry.reupload_attempts}/3)
           </button>
         ` : ''}
+        ${entry.status === 'pending' ? `
+          <button class="btn-edit btn-action-pill" data-id="${entry.id}">
+            Edit Details
+          </button>
+        ` : ''}
       </div>
     </div>
   `;
@@ -431,7 +439,10 @@ function bindDashboardActionListeners(container: HTMLElement) {
 
       // Set the hidden input value to mark this form as a replacement request
       const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
-      if (replacementInput) replacementInput.value = entry.id;
+      if (replacementInput) {
+        replacementInput.value = entry.id;
+        replacementInput.dataset.mode = 'replace';
+      }
 
       // Pre-fill fields
       const nameInput = document.getElementById('input-entry-name') as HTMLInputElement;
@@ -503,6 +514,105 @@ function bindDashboardActionListeners(container: HTMLElement) {
       if (submitBtn) {
         submitBtn.disabled = true; // Requires new consent checks
         submitBtn.textContent = 'Submit Replacement';
+      }
+
+      // Switch to the create-entry panel view
+      showView('create-entry');
+    });
+  });
+
+  // 3. Edit Actions (Pending entries)
+  const editButtons = container.querySelectorAll('.btn-edit');
+  editButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const entryId = button.getAttribute('data-id');
+      if (!entryId) return;
+
+      // Find the existing pending entry in userEntries
+      const entry = userEntries.find(ent => ent.id === entryId);
+      if (!entry) {
+        alert('Could not find entry records.');
+        return;
+      }
+
+      // Set the hidden input value to mark this form as an edit request
+      const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
+      if (replacementInput) {
+        replacementInput.value = entry.id;
+        replacementInput.dataset.mode = 'edit';
+      }
+
+      // Pre-fill fields
+      const nameInput = document.getElementById('input-entry-name') as HTMLInputElement;
+      if (nameInput) nameInput.value = entry.original_name || '';
+
+      const messageInput = document.getElementById('input-entry-message') as HTMLTextAreaElement;
+      if (messageInput) {
+        messageInput.value = entry.message || '';
+        
+        // Trigger character counter state update
+        const charCounter = document.getElementById('char-counter');
+        if (charCounter) {
+          const len = messageInput.value.length;
+          charCounter.textContent = `${len} / 200`;
+          if (len >= 180 && len < 200) {
+            charCounter.className = 'char-counter-text warning';
+          } else if (len >= 200) {
+            charCounter.className = 'char-counter-text danger';
+          } else {
+            charCounter.className = 'char-counter-text';
+          }
+        }
+      }
+
+      // Pre-select Mood pill
+      const moodPills = document.querySelectorAll('#mood-pills-wrapper .mood-pill');
+      const customMoodInput = document.getElementById('input-entry-custom-mood') as HTMLInputElement;
+      
+      let matchedPill = false;
+      moodPills.forEach(pill => {
+        const moodVal = pill.getAttribute('data-mood');
+        if (moodVal === entry.mood) {
+          pill.classList.add('active');
+          matchedPill = true;
+        } else {
+          pill.classList.remove('active');
+        }
+      });
+
+      if (entry.mood && !matchedPill) {
+        // It's a custom mood
+        const customPill = document.getElementById('mood-pill-custom');
+        if (customPill) customPill.classList.add('active');
+        if (customMoodInput) {
+          customMoodInput.style.display = 'block';
+          customMoodInput.value = entry.mood;
+        }
+      } else {
+        if (customMoodInput) {
+          customMoodInput.style.display = 'none';
+          customMoodInput.value = '';
+        }
+      }
+
+      // Uncheck checkboxes for consent re-verification
+      const consentModeration = document.getElementById('checkbox-consent-moderation') as HTMLInputElement;
+      const consentStorage = document.getElementById('checkbox-consent-storage') as HTMLInputElement;
+      if (consentModeration) consentModeration.checked = false;
+      if (consentStorage) consentStorage.checked = false;
+
+      // Update headers for edit context
+      const title = document.getElementById('create-entry-title');
+      if (title) title.textContent = 'Edit Submission';
+
+      const subtitle = document.getElementById('create-entry-subtitle');
+      if (subtitle) subtitle.textContent = 'Update your message, mood, or photo for your pending submission.';
+
+      const submitBtn = document.getElementById('btn-submit-entry') as HTMLButtonElement;
+      if (submitBtn) {
+        submitBtn.disabled = true; // Requires new consent checks
+        submitBtn.textContent = 'Save Changes';
       }
 
       // Switch to the create-entry panel view
