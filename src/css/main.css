@@ -645,12 +645,21 @@ p {
 }
 
 .dashboard-sections-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.6fr;
+  display: flex;
+  flex-direction: column;
   gap: 28px;
 }
 
-.dashboard-action-card,
+.dashboard-action-card {
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
 .dashboard-history-card {
   border-radius: var(--radius-lg);
   padding: 32px 28px;
@@ -660,11 +669,12 @@ p {
 
 .dashboard-action-card p {
   font-size: 0.94rem;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .dashboard-action-card .btn-primary {
-  align-self: flex-start;
+  align-self: center;
+  flex-shrink: 0;
 }
 
 .dashboard-entries-list-container {
@@ -1067,6 +1077,12 @@ p {
     padding: 0;
     box-shadow: none;
     border-radius: 0;
+  }
+
+  .dashboard-action-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
   }
 
   .dashboard-sections-grid {
