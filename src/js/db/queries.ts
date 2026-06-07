@@ -139,8 +139,8 @@ async function createGuestbookEntry(
 }
 
 /**
- * Checks the number of submissions the user has made over rolling and calendar intervals.
- * Limits: 1/day, 3/week, 10/month, 50/lifetime approved.
+ * Checks the number of submissions the user has made over rolling daily interval.
+ * Limits: 10/day.
  * Bypasses checks if user has 'admin' role (allowing unlimited testing).
  */
 async function checkUserSubmissionLimits() {
@@ -179,47 +179,21 @@ async function checkUserSubmissionLimits() {
   
   // Daily: rolling 24 hours
   const dailyThreshold = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-  
-  // Weekly: rolling 7 days
-  const weeklyThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  
-  // Monthly: current calendar month start
-  const monthlyThreshold = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-  // Run all count queries concurrently
-  const [dailyRes, weeklyRes, monthlyRes, lifetimeRes] = await Promise.all([
-    supabase
-      .from('guestbook_entries')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', dailyThreshold),
-    supabase
-      .from('guestbook_entries')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', weeklyThreshold),
-    supabase
-      .from('guestbook_entries')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', monthlyThreshold),
-    supabase
-      .from('guestbook_entries')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'approved')
-  ]);
+  // Run only daily count query to optimize database overhead
+  const dailyRes = await supabase
+    .from('guestbook_entries')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', dailyThreshold);
 
   if (dailyRes.error) throw dailyRes.error;
-  if (weeklyRes.error) throw weeklyRes.error;
-  if (monthlyRes.error) throw monthlyRes.error;
-  if (lifetimeRes.error) throw lifetimeRes.error;
 
   return {
     dailyCount: dailyRes.count || 0,
-    weeklyCount: weeklyRes.count || 0,
-    monthlyCount: monthlyRes.count || 0,
-    lifetimeCount: lifetimeRes.count || 0
+    weeklyCount: 0,
+    monthlyCount: 0,
+    lifetimeCount: 0
   };
 }
 

@@ -101,16 +101,10 @@ async function verifySubmissionLimitBeforeCapture(): Promise<boolean> {
   const limits = cachedLimits || (await checkUserSubmissionLimits().catch(() => null));
   if (!limits) return true; // Allow if checking failed/null
   
-  const dailyReached = limits.dailyCount >= 1;
-  const weeklyReached = limits.weeklyCount >= 3;
-  const monthlyReached = limits.monthlyCount >= 10;
-  const lifetimeReached = limits.lifetimeCount >= 50;
+  const dailyReached = limits.dailyCount >= 10;
 
-  if (dailyReached || weeklyReached || monthlyReached || lifetimeReached) {
-    if (dailyReached) alert('Daily submission limit reached (1/day). You can submit again tomorrow.');
-    else if (weeklyReached) alert('Weekly submission limit reached (3/week). Please wait a few days.');
-    else if (monthlyReached) alert('Monthly submission limit reached (10/month). Resets next month.');
-    else if (lifetimeReached) alert('Lifetime limit reached (50 approved entries). Contact administrator.');
+  if (dailyReached) {
+    alert('Daily submission limit reached (10/day). You can submit again tomorrow.');
     return false;
   }
   return true;
