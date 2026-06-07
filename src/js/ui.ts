@@ -9,6 +9,9 @@ import {
   deleteGuestbookEntry
 } from './db/queries';
 
+// Cache limits data to prevent async file dialog issues on mobile devices
+let cachedLimits: { dailyCount: number; weeklyCount: number; monthlyCount: number; lifetimeCount: number } | null = null;
+
 /**
  * Hides all main view sections and shows only the targeted view.
  */
@@ -35,7 +38,7 @@ async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-en
     // Update user context in Dashboard if provided
     const dashboardSubtitle = dashboardSection.querySelector('.section-subtitle');
     if (dashboardSubtitle && user) {
-      dashboardSubtitle.textContent = `Logged in as ${user.email}. Manage your private memories.`;
+      dashboardSubtitle.textContent = `Manage your private memories.`;
     }
     
     // Trigger dashboard loading
@@ -204,6 +207,8 @@ async function loadUserDashboard() {
  * Updates the dashboard rate limit indicator states.
  */
 function updateDashboardLimitsUI(limits: { dailyCount: number; weeklyCount: number; monthlyCount: number; lifetimeCount: number }) {
+  cachedLimits = limits;
+
   const triggerBtn = document.getElementById('btn-create-entry-trigger') as HTMLButtonElement;
   const actionCard = document.querySelector('.dashboard-action-card') as HTMLElement;
   
@@ -215,45 +220,9 @@ function updateDashboardLimitsUI(limits: { dailyCount: number; weeklyCount: numb
     existingWarning.remove();
   }
 
-  let limitReached = false;
-  let warningMessage = '';
-
-  if (limits.dailyCount >= 1) {
-    limitReached = true;
-    warningMessage = 'Daily submission limit reached (1/day). You can submit again tomorrow.';
-  } else if (limits.weeklyCount >= 3) {
-    limitReached = true;
-    warningMessage = 'Weekly submission limit reached (3/week). Please wait a few days.';
-  } else if (limits.monthlyCount >= 10) {
-    limitReached = true;
-    warningMessage = 'Monthly submission limit reached (10/month). Resets next month.';
-  } else if (limits.lifetimeCount >= 50) {
-    limitReached = true;
-    warningMessage = 'Lifetime limit reached (50 approved entries). Contact administrator.';
-  }
-
-  if (limitReached) {
-    triggerBtn.disabled = true;
-    triggerBtn.title = warningMessage;
-
-    // Render warning banner above the button
-    const banner = document.createElement('div');
-    banner.className = 'rate-limit-warning-banner animate-fade-in';
-    banner.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="12"></line>
-        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-      </svg>
-      <span>${warningMessage}</span>
-    `;
-    
-    // Insert before the button
-    actionCard.insertBefore(banner, triggerBtn);
-  } else {
-    triggerBtn.disabled = false;
-    triggerBtn.title = '';
-  }
+  // Button is always enabled now, warnings checked dynamically before capturing/uploading photos
+  triggerBtn.disabled = false;
+  triggerBtn.title = '';
 }
 
 /**
@@ -1174,5 +1143,6 @@ export {
   loadUserDashboard,
   loadAdminDashboard,
   renderAdminAllTab,
-  exportAdminEntriesToCSV
+  exportAdminEntriesToCSV,
+  cachedLimits
 };

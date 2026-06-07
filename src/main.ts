@@ -9,13 +9,15 @@ import {
   createGuestbookEntry, 
   isCurrentUserAdmin,
   replaceGuestbookEntry,
-  deleteUserAccount
+  deleteUserAccount,
+  checkUserSubmissionLimits
 } from './js/db/queries';
 import { 
   showView, 
   updateNavigation, 
   renderAdminAllTab, 
-  exportAdminEntriesToCSV 
+  exportAdminEntriesToCSV,
+  cachedLimits
 } from './js/ui';
 import { 
   startWebcam, 
@@ -94,10 +96,53 @@ function resetCameraUI() {
   if (fallbackInput) fallbackInput.value = '';
 }
 
+// Helper to verify submission limits before photo capture/upload
+async function verifySubmissionLimitBeforeCapture(): Promise<boolean> {
+  const limits = cachedLimits || (await checkUserSubmissionLimits().catch(() => null));
+  if (!limits) return true; // Allow if checking failed/null
+  
+  const dailyReached = limits.dailyCount >= 1;
+  const weeklyReached = limits.weeklyCount >= 3;
+  const monthlyReached = limits.monthlyCount >= 10;
+  const lifetimeReached = limits.lifetimeCount >= 50;
+
+  if (dailyReached || weeklyReached || monthlyReached || lifetimeReached) {
+    if (dailyReached) alert('Daily submission limit reached (1/day). You can submit again tomorrow.');
+    else if (weeklyReached) alert('Weekly submission limit reached (3/week). Please wait a few days.');
+    else if (monthlyReached) alert('Monthly submission limit reached (10/month). Resets next month.');
+    else if (lifetimeReached) alert('Lifetime limit reached (50 approved entries). Contact administrator.');
+    return false;
+  }
+  return true;
+}
+
 // DOM Setup
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Initialize Theme Switcher
   initTheme();
+
+  // Setup User Profile Dropdown
+  const dropdownMenuBtn = document.getElementById('dropdown-menu-btn');
+  const dropdownMenuContent = document.getElementById('dropdown-menu-content');
+  const profileDropdownContainer = document.querySelector('.profile-dropdown-container');
+
+  if (dropdownMenuBtn && dropdownMenuContent) {
+    dropdownMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenuContent.classList.toggle('show');
+    });
+
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (profileDropdownContainer && !profileDropdownContainer.contains(target)) {
+        dropdownMenuContent.classList.remove('show');
+      }
+    });
+
+    dropdownMenuContent.addEventListener('click', () => {
+      dropdownMenuContent.classList.remove('show');
+    });
+  }
   
   const themeToggleBtn = document.getElementById('theme-toggle-btn');
   if (themeToggleBtn) {
@@ -369,6 +414,13 @@ document.addEventListener('DOMContentLoaded', () => {
           btnCameraStart.disabled = true;
           btnCameraStart.textContent = 'Accessing...';
         }
+
+        // Dynamic limit check before starting camera
+        const isAllowed = await verifySubmissionLimitBeforeCapture();
+        if (!isAllowed) {
+          return;
+        }
+
         await startWebcam(cameraVideo);
         
         cameraVideo.style.display = 'block';
@@ -485,6 +537,22 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('File process failed:', err);
         alert(`Failed to upload photo: ${err.message || 'File must be an image.'}`);
         inputCameraFallback.value = '';
+      }
+    });
+  }
+
+  // Intercept label clicks to run submission limit verification before opening file dialog
+  const btnUploadLabel = document.querySelector('.btn-upload-label') as HTMLElement;
+  if (btnUploadLabel && inputCameraFallback) {
+    btnUploadLabel.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      btnUploadLabel.style.pointerEvents = 'none';
+      const isAllowed = await verifySubmissionLimitBeforeCapture();
+      btnUploadLabel.style.pointerEvents = '';
+      
+      if (isAllowed) {
+        inputCameraFallback.click();
       }
     });
   }

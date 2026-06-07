@@ -23,18 +23,31 @@
     <!-- Top Header -->
     <header class="top-header">
       <div class="logo-container">
-        <img src="/src/assets/logo.svg" alt="Guestbook Logo" class="app-logo" id="app-logo-img">
         <span class="logo-text">Guestbook</span>
       </div>
       
       <div class="app-nav" id="main-navigation">
         <span class="nav-status-indicator" id="auth-status-indicator">Connecting...</span>
         
-        <!-- User Profile Nav Container -->
-        <div id="nav-user-profile" style="display: none; align-items: center; gap: 12px;">
-          <span id="nav-user-email" class="nav-user-email-text"></span>
-          <button id="btn-nav-admin" class="nav-admin-btn" style="display: none;">Admin Panel</button>
-          <button id="btn-nav-signout" class="nav-signout-btn">Sign Out</button>
+        <!-- User Profile Nav Container (Dropdown Menu) -->
+        <div id="nav-user-profile" class="profile-dropdown-container" style="display: none;">
+          <button type="button" class="dropdown-trigger" id="dropdown-menu-btn" aria-label="Toggle user menu">
+            <!-- Menu list icon (three horizontal lines with dots, matching user's reference) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <circle cx="3" cy="6" r="1.5"></circle>
+              <circle cx="3" cy="12" r="1.5"></circle>
+              <circle cx="3" cy="18" r="1.5"></circle>
+            </svg>
+          </button>
+          <div class="dropdown-menu glass" id="dropdown-menu-content">
+            <button id="btn-nav-admin" class="dropdown-item" style="display: none;">Admin Panel</button>
+            <button id="btn-nav-signout" class="dropdown-item">Sign Out</button>
+            <div class="dropdown-divider"></div>
+            <button id="btn-delete-account" class="dropdown-item danger">Delete Account</button>
+          </div>
         </div>
 
         <!-- Theme Toggle Button -->
@@ -139,11 +152,6 @@
             <h3>Record a Visit</h3>
             <p>Leave a personal memory of your visit with a selfie, custom mood, and message.</p>
             <button id="btn-create-entry-trigger" class="btn-primary">Create Guestbook Entry</button>
-            <div class="danger-zone-separator" style="margin-top: 32px; border-top: 1px solid rgba(239, 68, 68, 0.1); padding-top: 16px; width: 100%;">
-              <h4 style="color: var(--danger); font-size: 0.9rem; margin-bottom: 6px;">Danger Zone</h4>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Permanently delete all your guestbook entries, uploaded photos, and profile archive.</p>
-              <button id="btn-delete-account" class="btn-secondary" style="border-color: rgba(239, 68, 68, 0.2); color: var(--danger); background: transparent; width: 100%;">Delete My Account</button>
-            </div>
           </div>
 
           <!-- History Grid Slot -->
