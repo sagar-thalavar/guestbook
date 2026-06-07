@@ -339,6 +339,73 @@ async function fetchAuditLogs() {
   return data;
 }
 
+/**
+ * Replaces or updates an existing guestbook entry (used during re-uploads for rejected entries).
+ * Increments the reupload_attempts counter and resets status to 'pending'.
+ */
+async function replaceGuestbookEntry(
+  entryId: string,
+  name: string,
+  message: string,
+  mood: string | null,
+  selfieBlob: Blob | null = null
+) {
+  if (!supabase) {
+    throw new Error('Supabase client is not configured.');
+  }
+
+  // 1. Fetch current entry to get current reupload_attempts count
+  const { data: currentEntry, error: fetchError } = await (supabase
+    .from('guestbook_entries') as any)
+    .select('reupload_attempts')
+    .eq('id', entryId)
+    .single();
+
+  if (fetchError || !currentEntry) {
+    throw new Error('Failed to retrieve entry details for replacement.');
+  }
+
+  const nextAttempts = (currentEntry.reupload_attempts || 0) + 1;
+  if (nextAttempts > 3) {
+    throw new Error('Maximum replacement attempts exceeded (max 3).');
+  }
+
+  // 2. Retrieve user details for path construction
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Session expired. Please sign in again.');
+
+  let filePath = null;
+  if (selfieBlob) {
+    filePath = await uploadSelfie(selfieBlob, entryId, user.id);
+  }
+
+  // 3. Update database record
+  const updateData: any = {
+    original_name: name,
+    message,
+    mood,
+    status: 'pending', // always reset status to pending review
+    reupload_attempts: nextAttempts
+  };
+
+  if (filePath) {
+    updateData.selfie_url = filePath;
+  }
+
+  const { data, error } = await (supabase
+    .from('guestbook_entries') as any)
+    .update(updateData)
+    .eq('id', entryId)
+    .select();
+
+  if (error) {
+    console.error('Error replacing entry:', error);
+    throw error;
+  }
+
+  return data ? data[0] : null;
+}
+
 export {
   fetchUserEntries,
   getSignedSelfieUrl,
@@ -348,5 +415,6 @@ export {
   fetchAdminEntries,
   moderateGuestbookEntry,
   deleteGuestbookEntry,
-  fetchAuditLogs
+  fetchAuditLogs,
+  replaceGuestbookEntry
 };

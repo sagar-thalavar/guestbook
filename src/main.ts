@@ -7,7 +7,8 @@ import {
 } from './js/auth/auth';
 import { 
   createGuestbookEntry, 
-  isCurrentUserAdmin 
+  isCurrentUserAdmin,
+  replaceGuestbookEntry
 } from './js/db/queries';
 import { 
   showView, 
@@ -497,23 +498,33 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
+        const replacementIdInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
+        const replacementId = replacementIdInput ? replacementIdInput.value : '';
+
         if (btnSubmitEntry) {
           btnSubmitEntry.disabled = true;
           btnSubmitEntry.textContent = 'Submitting...';
         }
 
-        await createGuestbookEntry(name, message, finalMood, true, activeSelfieBlob);
-        alert('Your entry was successfully submitted and is pending review!');
+        if (replacementId) {
+          await replaceGuestbookEntry(replacementId, name, message, finalMood, activeSelfieBlob);
+          alert('Your replacement entry was successfully submitted and is pending review!');
+        } else {
+          await createGuestbookEntry(name, message, finalMood, true, activeSelfieBlob);
+          alert('Your entry was successfully submitted and is pending review!');
+        }
         
         // Return to dashboard
         resetCameraUI();
         showView('dashboard', currentUser);
       } catch (err: any) {
-        console.error('Failed to create guestbook entry:', err);
+        console.error('Failed to save guestbook entry:', err);
         alert(`Failed to save entry: ${err.message || 'Unknown database error'}`);
       } finally {
         if (btnSubmitEntry) {
-          btnSubmitEntry.textContent = 'Submit Entry';
+          const replacementIdInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
+          const isReplacement = replacementIdInput && replacementIdInput.value !== '';
+          btnSubmitEntry.textContent = isReplacement ? 'Submit Replacement' : 'Submit Entry';
           validateConsentState();
         }
       }

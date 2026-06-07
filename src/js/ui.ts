@@ -58,6 +58,16 @@ function resetCreateEntryForm() {
   
   form.reset();
 
+  // Reset replacement-specific form state and headers
+  const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
+  if (replacementInput) replacementInput.value = '';
+
+  const title = document.getElementById('create-entry-title');
+  if (title) title.textContent = 'Leave a Memory';
+
+  const subtitle = document.getElementById('create-entry-subtitle');
+  if (subtitle) subtitle.textContent = 'Capture a moment from your visit. Tell us how you feel today.';
+
   const charCounter = document.getElementById('char-counter');
   if (charCounter) {
     charCounter.textContent = '0 / 200';
@@ -76,6 +86,7 @@ function resetCreateEntryForm() {
   const submitBtn = document.getElementById('btn-submit-entry') as HTMLButtonElement;
   if (submitBtn) {
     submitBtn.disabled = true;
+    submitBtn.textContent = 'Submit Entry';
   }
 }
 
@@ -141,7 +152,8 @@ async function loadUserDashboard() {
       checkUserSubmissionLimits()
     ]);
 
-    const entries = entriesData as any[];
+    userEntries = entriesData as any[];
+    const entries = userEntries;
     entriesListContainer.innerHTML = '';
 
     // 1. Update Limits Warning and Button Status
@@ -396,13 +408,105 @@ function bindDashboardActionListeners(container: HTMLElement) {
     });
   });
 
-  // 2. Replace Actions (Stub for Phase 9)
+  // 2. Replace Actions
   const replaceButtons = container.querySelectorAll('.btn-replace');
   replaceButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       const button = e.currentTarget as HTMLButtonElement;
       const entryId = button.getAttribute('data-id');
-      alert(`Replace Submission clicked for ID ${entryId}. This will be fully wired in Phase 9 Rejection Management!`);
+      if (!entryId) return;
+
+      // Find the existing rejected entry in userEntries
+      const entry = userEntries.find(ent => ent.id === entryId);
+      if (!entry) {
+        alert('Could not find entry records.');
+        return;
+      }
+
+      // Check reupload attempts constraint
+      if (entry.reupload_attempts >= 3) {
+        alert('Maximum replacement attempts exceeded. You cannot replace this entry anymore.');
+        return;
+      }
+
+      // Set the hidden input value to mark this form as a replacement request
+      const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
+      if (replacementInput) replacementInput.value = entry.id;
+
+      // Pre-fill fields
+      const nameInput = document.getElementById('input-entry-name') as HTMLInputElement;
+      if (nameInput) nameInput.value = entry.original_name || '';
+
+      const messageInput = document.getElementById('input-entry-message') as HTMLTextAreaElement;
+      if (messageInput) {
+        messageInput.value = entry.message || '';
+        
+        // Trigger character counter state update
+        const charCounter = document.getElementById('char-counter');
+        if (charCounter) {
+          const len = messageInput.value.length;
+          charCounter.textContent = `${len} / 200`;
+          if (len >= 180 && len < 200) {
+            charCounter.className = 'char-counter-text warning';
+          } else if (len >= 200) {
+            charCounter.className = 'char-counter-text danger';
+          } else {
+            charCounter.className = 'char-counter-text';
+          }
+        }
+      }
+
+      // Pre-select Mood pill
+      const moodPills = document.querySelectorAll('#mood-pills-wrapper .mood-pill');
+      const customMoodInput = document.getElementById('input-entry-custom-mood') as HTMLInputElement;
+      
+      let matchedPill = false;
+      moodPills.forEach(pill => {
+        const moodVal = pill.getAttribute('data-mood');
+        if (moodVal === entry.mood) {
+          pill.classList.add('active');
+          matchedPill = true;
+        } else {
+          pill.classList.remove('active');
+        }
+      });
+
+      if (entry.mood && !matchedPill) {
+        // It's a custom mood
+        const customPill = document.getElementById('mood-pill-custom');
+        if (customPill) customPill.classList.add('active');
+        if (customMoodInput) {
+          customMoodInput.style.display = 'block';
+          customMoodInput.value = entry.mood;
+        }
+      } else {
+        if (customMoodInput) {
+          customMoodInput.style.display = 'none';
+          customMoodInput.value = '';
+        }
+      }
+
+      // Uncheck checkboxes for consent re-verification
+      const consentModeration = document.getElementById('checkbox-consent-moderation') as HTMLInputElement;
+      const consentStorage = document.getElementById('checkbox-consent-storage') as HTMLInputElement;
+      if (consentModeration) consentModeration.checked = false;
+      if (consentStorage) consentStorage.checked = false;
+
+      // Update headers for replacement context
+      const title = document.getElementById('create-entry-title');
+      if (title) title.textContent = 'Replace Submission';
+
+      const subtitle = document.getElementById('create-entry-subtitle');
+      if (subtitle) subtitle.textContent = `Update your message, mood, or photo for re-review (Attempt ${entry.reupload_attempts + 1} of 3).`;
+
+      const submitBtn = document.getElementById('btn-submit-entry') as HTMLButtonElement;
+      if (submitBtn) {
+        submitBtn.disabled = true; // Requires new consent checks
+        submitBtn.textContent = 'Submit Replacement';
+      }
+
+      // Switch to the create-entry panel view
+      showView('create-entry');
     });
   });
 }
@@ -419,6 +523,9 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+// Track user data states globally inside this module
+let userEntries: any[] = [];
 
 // Track administrative data states globally inside this module
 let adminEntries: any[] = [];
