@@ -17,10 +17,10 @@
   <link rel="stylesheet" href="/src/css/main.css">
 </head>
 <body>
-  <!-- Layout Container (matching .container from portfolio) -->
+  <!-- Layout Container -->
   <div class="container" id="app-root">
     
-    <!-- Top Header (matching top-header from portfolio) -->
+    <!-- Top Header -->
     <header class="top-header">
       <div class="logo-container">
         <img src="/src/assets/logo.svg" alt="Guestbook Logo" class="app-logo" id="app-logo-img">
@@ -30,9 +30,14 @@
       <div class="app-nav" id="main-navigation">
         <span class="nav-status-indicator" id="auth-status-indicator">Connecting...</span>
         
-        <!-- Theme Toggle Button (matching portfolio theme toggle) -->
+        <!-- User Profile Nav Container (shown when logged in) -->
+        <div id="nav-user-profile" style="display: none; align-items: center; gap: 12px;">
+          <span id="nav-user-email" class="nav-user-email-text"></span>
+          <button id="btn-nav-signout" class="nav-signout-btn">Sign Out</button>
+        </div>
+
+        <!-- Theme Toggle Button -->
         <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle Theme">
-          <!-- Sun icon (visible in dark mode) -->
           <svg class="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -44,7 +49,6 @@
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
-          <!-- Moon icon (visible in light mode) -->
           <svg class="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
@@ -55,25 +59,99 @@
     <!-- Main Content Area -->
     <main id="main-content" class="grid-layout">
       
-      <!-- Hero Panel (matching .hero .glass from portfolio) -->
+      <!-- VIEW 1: Public Welcome Hero Section -->
       <section class="hero glass panel projects-panel animate-fade-in" id="hero-welcome">
-        
-        <!-- Live status badge (matching .hero-badge from portfolio) -->
         <div class="hero-badge">
           <div class="badge-pulse"></div>
           <span class="badge-text" id="hero-badge-status">visitor journal</span>
         </div>
-        
         <h1 class="hero-title">A private record of moments, memories, and visits.</h1>
         <p class="hero-subtitle">Capture your visit with a photo, a mood, and a short message to create an everlasting memory.</p>
-        
         <div class="hero-actions">
           <button id="btn-login-redirect" class="btn-primary">Sign In to Leave an Entry</button>
           <a href="#about-project" class="btn-secondary">Learn More</a>
         </div>
       </section>
 
-      <!-- About Section (matching .panel .glass from portfolio) -->
+      <!-- VIEW 2: Login Interface (hidden by default) -->
+      <section class="panel glass projects-panel animate-fade-in" id="login-panel" style="display: none;">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2>Sign In to Guestbook</h2>
+          </div>
+          <p class="section-subtitle">Authentication protects your memories.</p>
+        </div>
+
+        <div class="login-box">
+          <!-- Email / Magic Link Form -->
+          <form id="form-magic-link" class="login-form">
+            <div class="form-group">
+              <label for="input-login-email">Email Address</label>
+              <input type="email" id="input-login-email" class="form-input" placeholder="name@example.com" required>
+            </div>
+            <button type="submit" id="btn-magic-link" class="btn-primary login-btn">
+              Send Email Magic Link
+            </button>
+          </form>
+
+          <div class="login-divider">
+            <span>or</span>
+          </div>
+
+          <!-- Google OAuth Provider Button -->
+          <button id="btn-google-login" class="btn-secondary login-btn-google">
+            <svg class="google-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+              <path fill="#ea4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.63 15.02 1 12 1 7.37 1 3.4 3.65 1.48 7.5l3.85 2.99C6.27 7.42 8.92 5.04 12 5.04z"/>
+              <path fill="#4285f4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.34H12v4.44h6.45c-.28 1.48-1.11 2.74-2.37 3.58l3.68 2.85c2.16-1.99 3.4-4.92 3.4-8.53z"/>
+              <path fill="#fbbc05" d="M5.33 14.49c-.24-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29L1.48 6.92C.67 8.52.2 10.31.2 12.2s.47 3.68 1.28 5.28l3.85-2.99z"/>
+              <path fill="#34a853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.68-2.85c-1.02.68-2.33 1.09-4.28 1.09-3.08 0-5.73-2.38-6.67-5.45L1.48 15.87C3.4 19.72 7.37 23 12 23z"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          <!-- Back CTA -->
+          <button id="btn-login-back" class="btn-text">
+            &larr; Back to Welcome Screen
+          </button>
+        </div>
+      </section>
+
+      <!-- VIEW 3: Visitor Dashboard (hidden by default) -->
+      <section class="panel glass projects-panel animate-fade-in" id="dashboard-panel" style="display: none;">
+        <div class="dashboard-header-block">
+          <div class="section-title-group">
+            <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <h2>Your Memories Archive</h2>
+          </div>
+          <p class="section-subtitle">Manage your personal visitor logs and records.</p>
+        </div>
+
+        <!-- Dashboard Subsections (Stubs for Phase 2) -->
+        <div class="dashboard-sections-grid">
+          <!-- Create Entry CTA -->
+          <div class="dashboard-action-card glass">
+            <h3>Record a Visit</h3>
+            <p>Leave a personal memory of your visit with a selfie, custom mood, and message.</p>
+            <button id="btn-create-entry-trigger" class="btn-primary">Create Guestbook Entry</button>
+          </div>
+
+          <!-- History Grid Slot -->
+          <div class="dashboard-history-card glass">
+            <h3>Your Submission Logs</h3>
+            <div id="dashboard-entries-list" class="dashboard-entries-list-container">
+              <p class="empty-helper">No guestbook entries found. Write your first memory!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Static Detail Section -->
       <section class="panel glass projects-panel" id="about-project">
         <div class="section-header">
           <div class="section-title-group">
@@ -84,12 +162,11 @@
           </div>
           <p class="section-subtitle">A secure digital journal crafted to respect visitor data rights.</p>
         </div>
-        
         <p>Guestbook is a private, visitor-focused digital journal. Your entries, selfies, and moods are kept secure, moderated for safety, and stored exclusively as an archive of your connection with us. In alignment with modern data-rights philosophy, there is no public community wall, all photos are served over secure signed URLs, and visitors hold full deletion control over their entries.</p>
       </section>
     </main>
 
-    <!-- Footer (matching footer-wrapper from portfolio) -->
+    <!-- Footer -->
     <footer class="footer-wrapper">
       <p class="footer-text">&copy; 2026 Guestbook. All rights reserved.</p>
       <p class="footer-text">

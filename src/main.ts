@@ -1,26 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
-
-// Get environment variables loaded by Vite
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Check if credentials are real or placeholders
-const hasValidConfig = 
-  supabaseUrl && 
-  supabaseUrl !== 'https://your-supabase-project.supabase.co' &&
-  supabaseAnonKey &&
-  supabaseAnonKey !== 'your-supabase-anon-key';
-
-let supabase: ReturnType<typeof createClient> | null = null;
-
-// Initialize Supabase client if configuration is provided
-if (hasValidConfig) {
-  try {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
-  } catch (error) {
-    console.error('Failed to initialize Supabase client:', error);
-  }
-}
+import { hasValidConfig } from './js/db/supabaseClient';
+import { 
+  onAuthChange, 
+  signOut, 
+  signInWithGoogle, 
+  signInWithMagicLink 
+} from './js/auth/auth';
+import { showView, updateNavigation } from './js/ui';
 
 // Theme management helpers
 function initTheme() {
@@ -55,7 +40,7 @@ function updateThemeIcons(theme: string) {
 
 // DOM Setup
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Initialize Theme
+  // 1. Initialize Theme Switcher
   initTheme();
   
   const themeToggleBtn = document.getElementById('theme-toggle-btn');
@@ -67,34 +52,106 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. Setup Supabase Connections & Status Checks
-  const statusIndicator = document.getElementById('auth-status-indicator');
+  // 2. Auth Page Navigation Trigger Buttons
   const btnLoginRedirect = document.getElementById('btn-login-redirect');
-
-  if (statusIndicator) {
-    if (hasValidConfig) {
-      statusIndicator.textContent = 'Connected';
-      statusIndicator.classList.add('connected');
-    } else {
-      statusIndicator.textContent = 'Configure Database';
-      statusIndicator.style.borderColor = 'var(--danger)';
-    }
-  }
+  const btnLoginBack = document.getElementById('btn-login-back');
+  const btnSignOut = document.getElementById('btn-nav-signout');
 
   if (btnLoginRedirect) {
     btnLoginRedirect.addEventListener('click', () => {
       if (!hasValidConfig) {
         alert(
-          'Please set up your Supabase project URL and anon key in the `.env` file first, then run `npm run dev` to reload configuration.'
+          'Please set up your Supabase project URL and anon key in the `.env` file first to configure the database.'
         );
       } else {
-        alert('Supabase is configured! Ready for Phase 1 Authentication integration.');
+        showView('login');
       }
     });
   }
 
-  // Visual log for validation
-  console.log('Guestbook Foundation: Initialized successfully with Portfolio theme.');
-});
+  if (btnLoginBack) {
+    btnLoginBack.addEventListener('click', () => {
+      showView('welcome');
+    });
+  }
 
-export { supabase, hasValidConfig };
+  if (btnSignOut) {
+    btnSignOut.addEventListener('click', async () => {
+      try {
+        await signOut();
+        alert('You have signed out successfully.');
+      } catch (err) {
+        console.error('Error signing out:', err);
+      }
+    });
+  }
+
+  // 3. Form Submission Helpers
+  const formMagicLink = document.getElementById('form-magic-link') as HTMLFormElement;
+  const btnMagicLinkSubmit = document.getElementById('btn-magic-link') as HTMLButtonElement;
+
+  if (formMagicLink) {
+    formMagicLink.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const emailInput = document.getElementById('input-login-email') as HTMLInputElement;
+      const email = emailInput ? emailInput.value.trim() : '';
+      
+      if (!email) return;
+
+      try {
+        if (btnMagicLinkSubmit) {
+          btnMagicLinkSubmit.disabled = true;
+          btnMagicLinkSubmit.textContent = 'Sending Link...';
+        }
+
+        await signInWithMagicLink(email);
+        alert(`Magic Link sent successfully! Please check your email inbox at ${email} to complete sign-in.`);
+        
+        if (emailInput) emailInput.value = '';
+      } catch (err: any) {
+        console.error('Error sending magic link:', err);
+        alert(`Failed to send magic link: ${err.message || 'Unknown error'}`);
+      } finally {
+        if (btnMagicLinkSubmit) {
+          btnMagicLinkSubmit.disabled = false;
+          btnMagicLinkSubmit.textContent = 'Send Email Magic Link';
+        }
+      }
+    });
+  }
+
+  // 4. Google Login Button Action
+  const btnGoogleLogin = document.getElementById('btn-google-login');
+  if (btnGoogleLogin) {
+    btnGoogleLogin.addEventListener('click', async () => {
+      try {
+        await signInWithGoogle();
+      } catch (err: any) {
+        console.error('Error signing in with Google:', err);
+        alert(`Failed to sign in with Google: ${err.message || 'Unknown error'}`);
+      }
+    });
+  }
+
+  // 5. Subscribe to Supabase Auth State Shifts
+  if (hasValidConfig) {
+    onAuthChange((event, session) => {
+      console.log(`Auth state change triggered: ${event}`);
+      const user = session?.user || null;
+      
+      if (user) {
+        updateNavigation(user);
+        showView('dashboard', user);
+      } else {
+        updateNavigation(null);
+        showView('welcome');
+      }
+    });
+  } else {
+    // If not configured, render default public view and connection warning
+    updateNavigation(null);
+    showView('welcome');
+  }
+
+  console.log('Guestbook: Main scripts booted and aligned with Portfolio theme.');
+});

@@ -97,7 +97,7 @@ a {
   text-decoration: none;
 }
 
-/* --- Layout Container (Portfolio style) --- */
+/* --- Layout Container --- */
 .container {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
@@ -180,7 +180,41 @@ a {
   box-shadow: 0 0 6px var(--success);
 }
 
-/* --- Theme Toggle Switcher (Portfolio Style) --- */
+/* --- Logged-In User Profile Navigation --- */
+.nav-user-email-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-signout-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 99px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-signout-btn:hover {
+  background: var(--danger-light);
+  border-color: var(--danger);
+  color: var(--danger);
+  transform: translateY(-1px);
+}
+
+/* --- Theme Toggle Switcher --- */
 .theme-toggle {
   width: 44px;
   height: 44px;
@@ -221,6 +255,14 @@ h2 {
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
   letter-spacing: -0.03em;
   color: var(--text-primary);
+}
+
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
 p {
@@ -365,6 +407,177 @@ p {
   box-shadow: var(--shadow-hover);
 }
 
+.btn-text {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+}
+
+.btn-text:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+/* --- Form & Input Elements --- */
+.login-box {
+  max-width: 420px;
+  margin: 32px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.4);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+[data-theme='dark'] .form-input {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.form-input:focus {
+  background: var(--card-bg);
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 4px var(--accent-light);
+}
+
+.login-btn {
+  width: 100%;
+  padding: 14px;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.login-divider:not(:empty)::before {
+  margin-right: .75em;
+}
+
+.login-divider:not(:empty)::after {
+  margin-left: .75em;
+}
+
+/* --- Google OAuth Button --- */
+.login-btn-google {
+  width: 100%;
+  padding: 14px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.google-logo-svg {
+  margin-right: 8px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* --- Dashboard Section Layout --- */
+.dashboard-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 32px;
+}
+
+.dashboard-sections-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 28px;
+}
+
+.dashboard-action-card,
+.dashboard-history-card {
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-action-card p {
+  font-size: 0.94rem;
+  margin-bottom: 24px;
+}
+
+.dashboard-action-card .btn-primary {
+  align-self: flex-start;
+}
+
+.dashboard-entries-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.empty-helper {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  border: 1px dashed var(--card-border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+[data-theme='dark'] .empty-helper {
+  background: rgba(0, 0, 0, 0.1);
+}
+
 /* --- About/Panel Section --- */
 .section-header {
   margin-bottom: 24px;
@@ -425,6 +638,13 @@ p {
 }
 
 /* --- Responsiveness --- */
+@media (max-width: 1024px) {
+  .dashboard-sections-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 @media (max-width: 640px) {
   .container {
     width: min(100% - 20px, 1120px);
@@ -445,5 +665,9 @@ p {
   .btn-secondary {
     width: 100%;
     text-align: center;
+  }
+
+  .dashboard-action-card .btn-primary {
+    width: 100%;
   }
 }
