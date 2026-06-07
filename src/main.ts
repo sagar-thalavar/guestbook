@@ -22,17 +22,61 @@ if (hasValidConfig) {
   }
 }
 
+// Theme management helpers
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  // Set theme. Default to dark if no setting exists
+  const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  setTheme(theme);
+}
+
+function setTheme(theme: string) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  updateThemeIcons(theme);
+}
+
+function updateThemeIcons(theme: string) {
+  const sunIcon = document.querySelector('.theme-icon-sun') as HTMLElement;
+  const moonIcon = document.querySelector('.theme-icon-moon') as HTMLElement;
+  
+  if (sunIcon && moonIcon) {
+    if (theme === 'dark') {
+      sunIcon.style.display = 'block';
+      moonIcon.style.display = 'none';
+    } else {
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'block';
+    }
+  }
+}
+
 // DOM Setup
 document.addEventListener('DOMContentLoaded', () => {
+  // 1. Initialize Theme
+  initTheme();
+  
+  const themeToggleBtn = document.getElementById('theme-toggle-btn');
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      setTheme(newTheme);
+    });
+  }
+
+  // 2. Setup Supabase Connections & Status Checks
   const statusIndicator = document.getElementById('auth-status-indicator');
   const btnLoginRedirect = document.getElementById('btn-login-redirect');
 
   if (statusIndicator) {
     if (hasValidConfig) {
-      statusIndicator.textContent = 'Supabase Connected';
+      statusIndicator.textContent = 'Connected';
       statusIndicator.classList.add('connected');
     } else {
-      statusIndicator.textContent = 'Configure Supabase (.env)';
+      statusIndicator.textContent = 'Configure Database';
       statusIndicator.style.borderColor = 'var(--danger)';
     }
   }
@@ -50,12 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Visual log for validation
-  console.log('Guestbook Foundation: Initialized successfully.');
-  console.log('Config status:', {
-    hasValidConfig,
-    url: supabaseUrl,
-    key: supabaseAnonKey ? '***' : null
-  });
+  console.log('Guestbook Foundation: Initialized successfully with Portfolio theme.');
 });
 
 export { supabase, hasValidConfig };
