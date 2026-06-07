@@ -21,12 +21,16 @@ async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-en
   const dashboardSection = document.getElementById('dashboard-panel');
   const createEntrySection = document.getElementById('create-entry-panel');
   const adminSection = document.getElementById('admin-panel');
+  const aboutProjectSection = document.getElementById('about-project');
 
   if (welcomeSection) welcomeSection.style.display = 'none';
   if (loginSection) loginSection.style.display = 'none';
   if (dashboardSection) dashboardSection.style.display = 'none';
   if (createEntrySection) createEntrySection.style.display = 'none';
   if (adminSection) adminSection.style.display = 'none';
+  if (aboutProjectSection) {
+    aboutProjectSection.style.display = (viewName === 'admin') ? 'none' : 'block';
+  }
 
   if (viewName === 'welcome' && welcomeSection) {
     welcomeSection.style.display = 'block';

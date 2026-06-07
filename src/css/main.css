@@ -1025,6 +1025,30 @@ p {
 }
 
 @media (max-width: 640px) {
+  body {
+    font-size: 0.88rem;
+  }
+
+  h1.hero-title {
+    font-size: 1.8rem;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: 1.35rem;
+    letter-spacing: -0.02em;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
   .container {
     width: min(100% - 20px, 1120px);
     padding: 24px 0 40px;
@@ -1032,7 +1056,34 @@ p {
   }
 
   .panel {
-    padding: 32px 20px;
+    padding: 24px 16px;
+    border-radius: var(--radius-lg);
+  }
+
+  .dashboard-action-card,
+  .dashboard-history-card {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .dashboard-sections-grid {
+    gap: 32px;
+  }
+
+  .entry-card {
+    padding: 16px;
+    border-radius: var(--radius-lg);
+  }
+
+  .entry-message {
+    font-size: 0.88rem;
+  }
+
+  .entry-selfie-frame {
+    max-width: 220px;
   }
 
   .hero-actions {
@@ -1050,18 +1101,21 @@ p {
     width: 100%;
   }
 
-  /* Responsive Top Header */
+  /* Responsive Top Header - Keep Logo Left, Nav Buttons Right */
   .top-header {
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
-    gap: 16px;
-    text-align: center;
+    width: 100%;
+    gap: 0;
+    text-align: left;
   }
 
   .app-nav {
     flex-direction: row;
-    justify-content: center;
-    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    width: auto;
     gap: 12px;
   }
 
