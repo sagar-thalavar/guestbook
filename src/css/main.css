@@ -1056,3 +1056,30 @@ p {
     width: 100%;
   }
 }
+
+/* --- Rate Limit Warning Banner --- */
+.rate-limit-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--danger-light);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+[data-theme='dark'] .rate-limit-warning-banner {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.rate-limit-warning-banner svg {
+  flex-shrink: 0;
+  color: var(--danger);
+}
