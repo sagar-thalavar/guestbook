@@ -1,19 +1,29 @@
 import { hasValidConfig } from './db/supabaseClient';
-import { fetchUserEntries, getSignedSelfieUrl, checkUserSubmissionLimits } from './db/queries';
+import { 
+  fetchUserEntries, 
+  getSignedSelfieUrl, 
+  checkUserSubmissionLimits,
+  fetchAdminEntries,
+  fetchAuditLogs,
+  moderateGuestbookEntry,
+  deleteGuestbookEntry
+} from './db/queries';
 
 /**
  * Hides all main view sections and shows only the targeted view.
  */
-async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-entry', user?: any) {
+async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-entry' | 'admin', user?: any) {
   const welcomeSection = document.getElementById('hero-welcome');
   const loginSection = document.getElementById('login-panel');
   const dashboardSection = document.getElementById('dashboard-panel');
   const createEntrySection = document.getElementById('create-entry-panel');
+  const adminSection = document.getElementById('admin-panel');
 
   if (welcomeSection) welcomeSection.style.display = 'none';
   if (loginSection) loginSection.style.display = 'none';
   if (dashboardSection) dashboardSection.style.display = 'none';
   if (createEntrySection) createEntrySection.style.display = 'none';
+  if (adminSection) adminSection.style.display = 'none';
 
   if (viewName === 'welcome' && welcomeSection) {
     welcomeSection.style.display = 'block';
@@ -33,6 +43,9 @@ async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-en
   } else if (viewName === 'create-entry' && createEntrySection) {
     createEntrySection.style.display = 'block';
     resetCreateEntryForm();
+  } else if (viewName === 'admin' && adminSection) {
+    adminSection.style.display = 'block';
+    await loadAdminDashboard();
   }
 }
 
@@ -69,19 +82,26 @@ function resetCreateEntryForm() {
 /**
  * Updates the header navigation controls based on authentication state.
  */
-function updateNavigation(user: any | null) {
+function updateNavigation(user: any | null, isAdmin: boolean = false) {
   const statusIndicator = document.getElementById('auth-status-indicator');
   const userProfileNav = document.getElementById('nav-user-profile');
   const navUserEmail = document.getElementById('nav-user-email');
+  const btnNavAdmin = document.getElementById('btn-nav-admin');
 
   if (user) {
     // Hide connection status, show profile controls
     if (statusIndicator) statusIndicator.style.display = 'none';
     if (userProfileNav) userProfileNav.style.display = 'flex';
     if (navUserEmail) navUserEmail.textContent = user.email || '';
+    
+    // Display admin panel navigation trigger if user has admin role
+    if (btnNavAdmin) {
+      btnNavAdmin.style.display = isAdmin ? 'inline-flex' : 'none';
+    }
   } else {
     // Show connection status, hide profile controls
     if (userProfileNav) userProfileNav.style.display = 'none';
+    if (btnNavAdmin) btnNavAdmin.style.display = 'none';
     if (statusIndicator) {
       statusIndicator.style.display = 'inline-flex';
       
@@ -400,8 +420,542 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;');
 }
 
+// Track administrative data states globally inside this module
+let adminEntries: any[] = [];
+let adminLogs: any[] = [];
+
+/**
+ * Loads and renders the admin moderation panel.
+ */
+async function loadAdminDashboard() {
+  const pendingList = document.getElementById('admin-pending-list');
+  const allList = document.getElementById('admin-all-list');
+  const logsList = document.getElementById('admin-logs-list');
+  
+  const badgePending = document.getElementById('badge-count-pending');
+  const badgeAll = document.getElementById('badge-count-all');
+  const badgeLogs = document.getElementById('badge-count-logs');
+
+  if (!pendingList || !allList || !logsList) return;
+
+  const spinnerHTML = `
+    <div class="writings-state-container" style="grid-column: 1 / -1;">
+      <div class="loading-spinner"></div>
+      <p>Loading moderation archives...</p>
+    </div>
+  `;
+  pendingList.innerHTML = spinnerHTML;
+  allList.innerHTML = spinnerHTML;
+  logsList.innerHTML = `<tr><td colspan="5" class="empty-helper"><div class="loading-spinner" style="margin: 0 auto 12px;"></div>Loading activity logs...</td></tr>`;
+
+  try {
+    const [entries, logs] = await Promise.all([
+      fetchAdminEntries(),
+      fetchAuditLogs()
+    ]);
+
+    adminEntries = entries as any[];
+    adminLogs = logs as any[];
+
+    // Render lists
+    renderAdminPendingTab();
+    renderAdminAllTab();
+    renderAdminLogsTab();
+
+    // Update badges
+    const pendingCount = adminEntries.filter(e => e.status === 'pending').length;
+    if (badgePending) badgePending.textContent = pendingCount.toString();
+    if (badgeAll) badgeAll.textContent = adminEntries.length.toString();
+    if (badgeLogs) badgeLogs.textContent = adminLogs.length.toString();
+
+  } catch (error: any) {
+    console.error('Error loading admin dashboard:', error);
+    const errorHTML = `
+      <div class="writings-state-container error" style="grid-column: 1 / -1;">
+        <svg class="error-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p>Failed to load admin panel: ${error.message || 'Access Denied or Database Error'}</p>
+      </div>
+    `;
+    pendingList.innerHTML = errorHTML;
+    allList.innerHTML = errorHTML;
+    logsList.innerHTML = `<tr><td colspan="5" class="empty-helper" style="color: var(--danger);">Failed to load logs.</td></tr>`;
+  }
+}
+
+/**
+ * Renders the pending entries queue in the admin panel.
+ */
+function renderAdminPendingTab() {
+  const pendingList = document.getElementById('admin-pending-list');
+  if (!pendingList) return;
+
+  const pendingEntries = adminEntries.filter(e => e.status === 'pending');
+  pendingList.innerHTML = '';
+
+  if (pendingEntries.length === 0) {
+    pendingList.innerHTML = `
+      <p class="empty-helper" style="grid-column: 1 / -1;">No pending submissions to review. Excellent work!</p>
+    `;
+    return;
+  }
+
+  pendingEntries.forEach(entry => {
+    const card = createAdminModerationCard(entry);
+    pendingList.appendChild(card);
+    if (entry.selfie_url) {
+      loadCardSelfie(card, entry.selfie_url);
+    }
+  });
+
+  bindAdminPendingActions(pendingList);
+}
+
+/**
+ * Renders the search-filtered full list of guestbook entries.
+ */
+function renderAdminAllTab() {
+  const allList = document.getElementById('admin-all-list');
+  if (!allList) return;
+
+  const searchInput = document.getElementById('input-admin-search') as HTMLInputElement;
+  const filterStatus = document.getElementById('select-admin-filter-status') as HTMLSelectElement;
+
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const statusFilter = filterStatus ? filterStatus.value : 'all';
+
+  let filtered = adminEntries;
+
+  // Filter status
+  if (statusFilter !== 'all') {
+    filtered = filtered.filter(e => e.status === statusFilter);
+  }
+
+  // Filter search query (matches name or message)
+  if (query) {
+    filtered = filtered.filter(e => 
+      (e.original_name && e.original_name.toLowerCase().includes(query)) ||
+      (e.message && e.message.toLowerCase().includes(query))
+    );
+  }
+
+  allList.innerHTML = '';
+
+  if (filtered.length === 0) {
+    allList.innerHTML = `
+      <p class="empty-helper" style="grid-column: 1 / -1;">No entries match the filter criteria.</p>
+    `;
+    return;
+  }
+
+  filtered.forEach(entry => {
+    const card = createAdminAllCard(entry);
+    allList.appendChild(card);
+    if (entry.selfie_url) {
+      loadCardSelfie(card, entry.selfie_url);
+    }
+  });
+
+  bindAdminAllActions(allList);
+}
+
+/**
+ * Renders the admin audit logs table list.
+ */
+function renderAdminLogsTab() {
+  const logsList = document.getElementById('admin-logs-list');
+  if (!logsList) return;
+
+  logsList.innerHTML = '';
+
+  if (adminLogs.length === 0) {
+    logsList.innerHTML = `
+      <tr>
+        <td colspan="5" class="empty-helper">No audit logs recorded yet.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  adminLogs.forEach(log => {
+    const tr = document.createElement('tr');
+    
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    };
+    const formattedDate = new Date(log.created_at).toLocaleDateString(undefined, dateOptions);
+
+    let actionBadgeClass = 'deletion';
+    let actionLabel = log.action;
+    if (log.action === 'approval') {
+      actionBadgeClass = 'approval';
+      actionLabel = 'Approve';
+    } else if (log.action === 'rejection') {
+      actionBadgeClass = 'rejection';
+      actionLabel = 'Reject';
+    }
+
+    let detailText = '';
+    if (log.action === 'rejection' && log.details) {
+      const reason = log.details.reason || '';
+      const custom = log.details.custom_reason ? `: ${log.details.custom_reason}` : '';
+      detailText = `Rejection Reason: ${reason}${custom}`;
+    } else if (log.action === 'approval') {
+      detailText = 'Approved entry';
+    } else {
+      detailText = log.details ? JSON.stringify(log.details) : '';
+    }
+
+    tr.innerHTML = `
+      <td>${formattedDate}</td>
+      <td><span class="log-action-badge ${actionBadgeClass}">${actionLabel}</span></td>
+      <td class="log-target">${log.entry_id || 'N/A'}</td>
+      <td class="log-actor">${log.actor_id || 'System'}</td>
+      <td>${escapeHtml(detailText)}</td>
+    `;
+    logsList.appendChild(tr);
+  });
+}
+
+/**
+ * Creates the DOM element for a moderation entry card.
+ */
+function createAdminModerationCard(entry: any): HTMLElement {
+  const card = document.createElement('div');
+  card.className = 'entry-card glass-hover animate-fade-in';
+  
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+  const formattedDate = new Date(entry.created_at).toLocaleDateString(undefined, dateOptions);
+
+  card.innerHTML = `
+    <div class="entry-card-header">
+      <div class="entry-user-info">
+        <span class="entry-name">${escapeHtml(entry.original_name)}</span>
+        <span class="entry-date">${formattedDate}</span>
+      </div>
+      <div class="entry-status-badge pending">
+        <span class="status-dot"></span>
+        <span class="status-text">Pending</span>
+      </div>
+    </div>
+    
+    <div class="entry-card-body">
+      ${entry.selfie_url ? `
+        <div class="entry-selfie-frame">
+          <div class="selfie-loader-spinner"></div>
+          <img class="entry-selfie" alt="Selfie Memory" style="display: none;" />
+        </div>
+      ` : ''}
+      <p class="entry-message">"${escapeHtml(entry.message)}"</p>
+    </div>
+    
+    <div class="entry-card-footer" style="flex-direction: column; gap: 12px; align-items: stretch;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : '<span class="tag-pill">No Mood</span>'}
+      </div>
+      
+      <!-- Moderation Actions -->
+      <div class="entry-card-moderate-actions" id="moderate-actions-${entry.id}">
+        <button class="btn-moderate-approve btn-primary" data-id="${entry.id}">
+          Approve
+        </button>
+        <button class="btn-moderate-reject btn-secondary" data-id="${entry.id}">
+          Reject
+        </button>
+      </div>
+
+      <!-- Rejection selector (hidden initially) -->
+      <div class="rejection-selector-panel" id="rejection-panel-${entry.id}" style="display: none;">
+        <label for="select-reason-${entry.id}">Rejection Reason</label>
+        <select id="select-reason-${entry.id}" class="form-input">
+          <option value="unclear_photo">Unclear Photo</option>
+          <option value="inappropriate_content">Inappropriate Content</option>
+          <option value="image_not_visitor">Image does not show visitor</option>
+          <option value="duplicate_submission">Duplicate Submission</option>
+          <option value="spam_submission">Spam Submission</option>
+          <option value="other">Other (Specify below)</option>
+        </select>
+        <input type="text" id="input-custom-reason-${entry.id}" class="form-input" placeholder="Type custom reason..." style="display: none; margin-top: 6px;" maxlength="100">
+        <div class="rejection-actions-row" style="margin-top: 8px;">
+          <button class="btn-rejection-submit" data-id="${entry.id}">Confirm Reject</button>
+          <button class="btn-rejection-cancel btn-secondary" data-id="${entry.id}">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+/**
+ * Creates the DOM element for all entries lists.
+ */
+function createAdminAllCard(entry: any): HTMLElement {
+  const card = document.createElement('div');
+  card.className = 'entry-card glass-hover animate-fade-in';
+  
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+  const formattedDate = new Date(entry.created_at).toLocaleDateString(undefined, dateOptions);
+
+  let statusClass = 'pending';
+  let statusText = 'Pending';
+  if (entry.status === 'approved') {
+    statusClass = 'approved';
+    statusText = 'Approved';
+  } else if (entry.status === 'rejected') {
+    statusClass = 'rejected';
+    statusText = 'Rejected';
+  }
+
+  let detailsHTML = '';
+  if (entry.status === 'rejected') {
+    detailsHTML = `<p class="rejection-reason-box" style="margin-top: 8px;">Reason: <strong>${escapeHtml(entry.rejection_reason)}${entry.custom_rejection_reason ? ': ' + escapeHtml(entry.custom_rejection_reason) : ''}</strong></p>`;
+  }
+
+  card.innerHTML = `
+    <div class="entry-card-header">
+      <div class="entry-user-info">
+        <span class="entry-name">${escapeHtml(entry.original_name)}</span>
+        <span class="entry-date">${formattedDate}</span>
+      </div>
+      <div class="entry-status-badge ${statusClass}">
+        <span class="status-dot"></span>
+        <span class="status-text">${statusText}</span>
+      </div>
+    </div>
+    
+    <div class="entry-card-body">
+      ${entry.selfie_url ? `
+        <div class="entry-selfie-frame">
+          <div class="selfie-loader-spinner"></div>
+          <img class="entry-selfie" alt="Selfie Memory" style="display: none;" />
+        </div>
+      ` : ''}
+      <p class="entry-message">"${escapeHtml(entry.message)}"</p>
+      ${detailsHTML}
+    </div>
+    
+    <div class="entry-card-footer" style="justify-content: space-between; align-items: center;">
+      ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : '<span class="tag-pill">No Mood</span>'}
+      <button class="btn-moderate-delete btn-action-pill" data-id="${entry.id}" style="padding: 6px 12px; font-size: 0.8rem; background: var(--danger-light); color: var(--danger); border-color: rgba(239, 68, 68, 0.1);">
+        Delete
+      </button>
+    </div>
+  `;
+  return card;
+}
+
+/**
+ * Binds actions on the admin pending moderation queue card triggers.
+ */
+function bindAdminPendingActions(container: HTMLElement) {
+  // 1. Approve Button Clicked
+  const approveButtons = container.querySelectorAll('.btn-moderate-approve');
+  approveButtons.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const entryId = button.getAttribute('data-id');
+      if (!entryId) return;
+
+      try {
+        button.disabled = true;
+        button.textContent = 'Approving...';
+        await moderateGuestbookEntry(entryId, 'approved');
+        
+        // Reload dashboard
+        await loadAdminDashboard();
+      } catch (err: any) {
+        console.error(err);
+        alert(`Failed to approve entry: ${err.message || 'Database error'}`);
+        button.disabled = false;
+        button.textContent = 'Approve';
+      }
+    });
+  });
+
+  // 2. Reject Button Clicked (Toggles panel)
+  const rejectButtons = container.querySelectorAll('.btn-moderate-reject');
+  rejectButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const entryId = button.getAttribute('data-id');
+      if (!entryId) return;
+
+      const actionsPanel = document.getElementById(`moderate-actions-${entryId}`);
+      const rejectionPanel = document.getElementById(`rejection-panel-${entryId}`);
+      const selectReason = document.getElementById(`select-reason-${entryId}`) as HTMLSelectElement;
+      const customInput = document.getElementById(`input-custom-reason-${entryId}`) as HTMLInputElement;
+
+      if (actionsPanel) actionsPanel.style.display = 'none';
+      if (rejectionPanel) rejectionPanel.style.display = 'flex';
+      
+      // Bind select change trigger to show custom reason input
+      if (selectReason) {
+        selectReason.value = 'unclear_photo';
+        if (customInput) customInput.style.display = 'none';
+        
+        selectReason.onchange = () => {
+          if (customInput) {
+            customInput.style.display = selectReason.value === 'other' ? 'block' : 'none';
+            if (selectReason.value === 'other') customInput.focus();
+          }
+        };
+      }
+    });
+  });
+
+  // 3. Cancel Rejection Button Clicked
+  const cancelButtons = container.querySelectorAll('.btn-rejection-cancel');
+  cancelButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const entryId = button.getAttribute('data-id');
+      if (!entryId) return;
+
+      const actionsPanel = document.getElementById(`moderate-actions-${entryId}`);
+      const rejectionPanel = document.getElementById(`rejection-panel-${entryId}`);
+
+      if (actionsPanel) actionsPanel.style.display = 'flex';
+      if (rejectionPanel) rejectionPanel.style.display = 'none';
+    });
+  });
+
+  // 4. Confirm Rejection Submit Clicked
+  const confirmButtons = container.querySelectorAll('.btn-rejection-submit');
+  confirmButtons.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const entryId = button.getAttribute('data-id');
+      if (!entryId) return;
+
+      const selectReason = document.getElementById(`select-reason-${entryId}`) as HTMLSelectElement;
+      const customInput = document.getElementById(`input-custom-reason-${entryId}`) as HTMLInputElement;
+      
+      const reason = selectReason ? selectReason.value : 'other';
+      const customReason = (reason === 'other' && customInput) ? customInput.value.trim() : '';
+
+      if (reason === 'other' && !customReason) {
+        alert('Please specify a rejection reason.');
+        return;
+      }
+
+      try {
+        button.disabled = true;
+        button.textContent = 'Rejecting...';
+        await moderateGuestbookEntry(entryId, 'rejected', reason, customReason || null);
+        
+        // Reload dashboard
+        await loadAdminDashboard();
+      } catch (err: any) {
+        console.error(err);
+        alert(`Failed to reject entry: ${err.message || 'Database error'}`);
+        button.disabled = false;
+        button.textContent = 'Confirm Reject';
+      }
+    });
+  });
+}
+
+/**
+ * Binds action buttons inside the full entries grid.
+ */
+function bindAdminAllActions(container: HTMLElement) {
+  // Delete Button Clicked
+  const deleteButtons = container.querySelectorAll('.btn-moderate-delete');
+  deleteButtons.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const entryId = button.getAttribute('data-id');
+      if (!entryId) return;
+
+      const confirmed = confirm('Are you sure you want to delete this guestbook entry permanently? This action is irreversible.');
+      if (!confirmed) return;
+
+      try {
+        button.disabled = true;
+        button.textContent = 'Deleting...';
+        await deleteGuestbookEntry(entryId);
+        
+        // Reload dashboard
+        await loadAdminDashboard();
+      } catch (err: any) {
+        console.error(err);
+        alert(`Failed to delete entry: ${err.message || 'Database error'}`);
+        button.disabled = false;
+        button.textContent = 'Delete';
+      }
+    });
+  });
+}
+
+/**
+ * Compiles entry data and triggers a programmatically loaded CSV download.
+ */
+function exportAdminEntriesToCSV() {
+  if (adminEntries.length === 0) {
+    alert('No records available to export.');
+    return;
+  }
+
+  // Define headers
+  const headers = ['ID', 'User ID', 'Name', 'Mood', 'Message', 'Selfie Path', 'Status', 'Rejection Reason', 'Reupload Attempts', 'Created At'];
+  
+  // Map rows
+  const rows = adminEntries.map(e => [
+    e.id || '',
+    e.user_id || '',
+    e.original_name || '',
+    e.mood || '',
+    e.message || '',
+    e.selfie_url || '',
+    e.status || '',
+    e.rejection_reason || '',
+    e.reupload_attempts || 0,
+    e.created_at || ''
+  ]);
+
+  // Convert to CSV string format
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(val => `"${val.toString().replace(/"/g, '""')}"`).join(','))
+  ].join('\n');
+
+  // Trigger file download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `guestbook_entries_export_${Date.now()}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 export {
   showView,
   updateNavigation,
-  loadUserDashboard
+  loadUserDashboard,
+  loadAdminDashboard,
+  renderAdminAllTab,
+  exportAdminEntriesToCSV
 };

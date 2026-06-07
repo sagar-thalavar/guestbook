@@ -5,8 +5,16 @@ import {
   signInWithGoogle, 
   signInWithMagicLink 
 } from './js/auth/auth';
-import { createGuestbookEntry } from './js/db/queries';
-import { showView, updateNavigation } from './js/ui';
+import { 
+  createGuestbookEntry, 
+  isCurrentUserAdmin 
+} from './js/db/queries';
+import { 
+  showView, 
+  updateNavigation, 
+  renderAdminAllTab, 
+  exportAdminEntriesToCSV 
+} from './js/ui';
 import { 
   startWebcam, 
   stopWebcam, 
@@ -194,6 +202,66 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCancelEntry.addEventListener('click', () => {
       resetCameraUI();
       showView('dashboard', currentUser);
+    });
+  }
+
+  // 5.5. Admin Navigation & Tab Switcher triggers
+  const btnNavAdmin = document.getElementById('btn-nav-admin');
+  const btnAdminBack = document.getElementById('btn-admin-back');
+
+  if (btnNavAdmin) {
+    btnNavAdmin.addEventListener('click', () => {
+      showView('admin', currentUser);
+    });
+  }
+
+  if (btnAdminBack) {
+    btnAdminBack.addEventListener('click', () => {
+      showView('dashboard', currentUser);
+    });
+  }
+
+  const adminTabButtons = document.querySelectorAll('.admin-tab-btn');
+  adminTabButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLButtonElement;
+      const tabName = target.getAttribute('data-tab');
+      
+      adminTabButtons.forEach(b => b.classList.remove('active'));
+      target.classList.add('active');
+
+      const panes = document.querySelectorAll('.admin-tab-pane') as NodeListOf<HTMLElement>;
+      panes.forEach(p => p.style.display = 'none');
+
+      const activePane = document.getElementById(`pane-${tabName}`);
+      if (activePane) activePane.style.display = 'block';
+
+      const filtersBar = document.getElementById('admin-filters-bar');
+      if (filtersBar) {
+        filtersBar.style.display = tabName === 'all' ? 'flex' : 'none';
+      }
+    });
+  });
+
+  const adminSearchInput = document.getElementById('input-admin-search');
+  const adminStatusFilter = document.getElementById('select-admin-filter-status');
+  const btnAdminExportCSV = document.getElementById('btn-admin-export-csv');
+  
+  if (adminSearchInput) {
+    adminSearchInput.addEventListener('input', () => {
+      renderAdminAllTab();
+    });
+  }
+
+  if (adminStatusFilter) {
+    adminStatusFilter.addEventListener('change', () => {
+      renderAdminAllTab();
+    });
+  }
+
+  if (btnAdminExportCSV) {
+    btnAdminExportCSV.addEventListener('click', () => {
+      exportAdminEntriesToCSV();
     });
   }
 
@@ -454,23 +522,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 10. Subscribe to Supabase Auth State Shifts
   if (hasValidConfig) {
-    onAuthChange((event, session) => {
+    onAuthChange(async (event, session) => {
       console.log(`Auth state change triggered: ${event}`);
       currentUser = session?.user || null;
       
       resetCameraUI();
       
       if (currentUser) {
-        updateNavigation(currentUser);
+        const isAdmin = await isCurrentUserAdmin();
+        updateNavigation(currentUser, isAdmin);
         showView('dashboard', currentUser);
       } else {
-        updateNavigation(null);
+        updateNavigation(null, false);
         showView('welcome');
       }
     });
   } else {
     // If not configured, render default public view and connection warning
-    updateNavigation(null);
+    updateNavigation(null, false);
     showView('welcome');
   }
 

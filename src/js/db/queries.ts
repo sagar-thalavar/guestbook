@@ -223,9 +223,130 @@ async function checkUserSubmissionLimits() {
   };
 }
 
+/**
+ * Checks if the currently logged-in user has the 'admin' role.
+ */
+async function isCurrentUserAdmin(): Promise<boolean> {
+  if (!supabase) return false;
+  
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return false;
+  
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single() as any;
+      
+    if (error || !data) return false;
+    return data.role === 'admin';
+  } catch (err) {
+    console.error('Error in isCurrentUserAdmin:', err);
+    return false;
+  }
+}
+
+/**
+ * Fetch all entries in the guestbook (admin only).
+ */
+async function fetchAdminEntries() {
+  if (!supabase) {
+    throw new Error('Supabase client is not configured.');
+  }
+
+  const { data, error } = await supabase
+    .from('guestbook_entries')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching admin entries:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+/**
+ * Moderates a guestbook entry (approves or rejects).
+ */
+async function moderateGuestbookEntry(
+  entryId: string,
+  status: 'approved' | 'rejected',
+  rejectionReason: string | null = null,
+  customRejectionReason: string | null = null
+) {
+  if (!supabase) {
+    throw new Error('Supabase client is not configured.');
+  }
+
+  const { data, error } = await (supabase
+    .from('guestbook_entries') as any)
+    .update({
+      status,
+      rejection_reason: rejectionReason,
+      custom_rejection_reason: customRejectionReason
+    })
+    .eq('id', entryId)
+    .select();
+
+  if (error) {
+    console.error('Error moderating entry:', error);
+    throw error;
+  }
+
+  return data ? data[0] : null;
+}
+
+/**
+ * Deletes a guestbook entry (admin only or owner during account purge).
+ */
+async function deleteGuestbookEntry(entryId: string) {
+  if (!supabase) {
+    throw new Error('Supabase client is not configured.');
+  }
+
+  const { error } = await supabase
+    .from('guestbook_entries')
+    .delete()
+    .eq('id', entryId);
+
+  if (error) {
+    console.error('Error deleting entry:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch all audit logs (admin only).
+ */
+async function fetchAuditLogs() {
+  if (!supabase) {
+    throw new Error('Supabase client is not configured.');
+  }
+
+  const { data, error } = await supabase
+    .from('audit_logs')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching audit logs:', error);
+    throw error;
+  }
+
+  return data;
+}
+
 export {
   fetchUserEntries,
   getSignedSelfieUrl,
   createGuestbookEntry,
-  checkUserSubmissionLimits
+  checkUserSubmissionLimits,
+  isCurrentUserAdmin,
+  fetchAdminEntries,
+  moderateGuestbookEntry,
+  deleteGuestbookEntry,
+  fetchAuditLogs
 };

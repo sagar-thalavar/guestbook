@@ -33,6 +33,7 @@
         <!-- User Profile Nav Container -->
         <div id="nav-user-profile" style="display: none; align-items: center; gap: 12px;">
           <span id="nav-user-email" class="nav-user-email-text"></span>
+          <button id="btn-nav-admin" class="nav-admin-btn" style="display: none;">Admin Panel</button>
           <button id="btn-nav-signout" class="nav-signout-btn">Sign Out</button>
         </div>
 
@@ -246,6 +247,92 @@
             <button type="button" id="btn-cancel-entry" class="btn-secondary">Cancel</button>
           </div>
         </form>
+      </section>
+
+      <!-- VIEW 5: Admin Moderation Panel (hidden by default) -->
+      <section class="panel glass projects-panel animate-fade-in" id="admin-panel" style="display: none;">
+        <div class="dashboard-header-block">
+          <div class="section-title-group">
+            <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <h2>Admin Moderation Portal</h2>
+          </div>
+          <p class="section-subtitle">Review, approve, or reject visitor submissions and audit activity logs.</p>
+        </div>
+
+        <!-- Tab Badges / Switchers -->
+        <div class="admin-tabs-row">
+          <button type="button" class="admin-tab-btn active" data-tab="pending">
+            Pending Queue <span class="tab-badge" id="badge-count-pending">0</span>
+          </button>
+          <button type="button" class="admin-tab-btn" data-tab="all">
+            All Entries <span class="tab-badge" id="badge-count-all">0</span>
+          </button>
+          <button type="button" class="admin-tab-btn" data-tab="logs">
+            Audit Logs <span class="tab-badge" id="badge-count-logs">0</span>
+          </button>
+        </div>
+
+        <!-- Search / Filters block (Only visible on 'all' tab, controlled dynamically) -->
+        <div class="admin-filters-bar" id="admin-filters-bar" style="display: none; margin-top: 16px;">
+          <input type="text" id="input-admin-search" class="form-input" placeholder="Search by name...">
+          <select id="select-admin-filter-status" class="form-input" style="max-width: 180px;">
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button type="button" id="btn-admin-export-csv" class="btn-secondary">Export to CSV</button>
+        </div>
+
+        <!-- Admin View Contents Container -->
+        <div class="admin-tab-contents" style="margin-top: 24px;">
+          
+          <!-- TAB 1: Pending Queue -->
+          <div class="admin-tab-pane" id="pane-pending">
+            <div id="admin-pending-list" class="admin-entries-grid">
+              <p class="empty-helper">No pending submissions to review. Excellent work!</p>
+            </div>
+          </div>
+
+          <!-- TAB 2: All Entries -->
+          <div class="admin-tab-pane" id="pane-all" style="display: none;">
+            <div id="admin-all-list" class="admin-entries-grid">
+              <p class="empty-helper">No entries found.</p>
+            </div>
+          </div>
+
+          <!-- TAB 3: Audit Logs -->
+          <div class="admin-tab-pane" id="pane-logs" style="display: none;">
+            <div class="admin-table-responsive">
+              <table class="admin-logs-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>Target ID</th>
+                    <th>Moderator</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-logs-list">
+                  <tr>
+                    <td colspan="5" class="empty-helper">No audit logs recorded yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Back Button -->
+        <div class="form-actions-row" style="margin-top: 32px; border-top: 1px solid var(--card-border); padding-top: 24px;">
+          <button type="button" id="btn-admin-back" class="btn-secondary">&larr; Back to Dashboard</button>
+        </div>
       </section>
 
       <!-- Static Detail Section -->

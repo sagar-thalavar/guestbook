@@ -1170,3 +1170,299 @@ p {
   user-select: none;
 }
 
+/* --- Admin Moderation Portal --- */
+.admin-tabs-row {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--card-border);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.admin-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.admin-tab-btn:hover {
+  color: var(--text-primary);
+  background: var(--accent-light);
+}
+
+.admin-tab-btn.active {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  color: var(--text-primary);
+}
+
+.tab-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--card-border);
+  color: var(--text-secondary);
+  margin-left: 8px;
+  transition: all var(--transition-fast);
+}
+
+.admin-tab-btn.active .tab-badge {
+  background: var(--text-primary);
+  color: var(--bg);
+}
+
+.admin-filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  width: 100%;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 8px;
+}
+
+.admin-filters-bar .form-input {
+  max-width: 280px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  border-radius: 12px;
+}
+
+.admin-filters-bar select.form-input {
+  cursor: pointer;
+}
+
+.admin-filters-bar .btn-secondary {
+  padding: 10px 18px;
+  font-size: 0.88rem;
+  border-radius: 12px;
+}
+
+.admin-entries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .admin-entries-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Admin Moderation Cards action states */
+.entry-card-moderate-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.btn-moderate-approve,
+.btn-moderate-reject {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.btn-moderate-approve {
+  background: var(--success-light);
+  color: var(--success);
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.btn-moderate-approve:hover {
+  background: var(--success);
+  color: #ffffff;
+  border-color: var(--success);
+  transform: translateY(-1px);
+}
+
+.btn-moderate-reject {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+.btn-moderate-reject:hover {
+  background: var(--danger);
+  color: #ffffff;
+  border-color: var(--danger);
+  transform: translateY(-1px);
+}
+
+/* Moderation Rejection Reason Panel */
+.rejection-selector-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(239, 68, 68, 0.03);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  width: 100%;
+  margin-top: 14px;
+}
+
+.rejection-selector-panel label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.rejection-selector-panel select.form-input {
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  border-radius: 10px;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.rejection-selector-panel input.form-input {
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  border-radius: 10px;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.rejection-actions-row {
+  display: flex;
+  gap: 8px;
+}
+
+.rejection-actions-row button {
+  flex: 1;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-rejection-submit {
+  background: var(--danger);
+  color: #ffffff;
+  border: 1px solid var(--danger);
+}
+
+.btn-rejection-submit:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-rejection-cancel {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--card-border);
+}
+
+.btn-rejection-cancel:hover {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+/* Audit Logs Table Layout */
+.admin-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+}
+
+.admin-logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.admin-logs-table th,
+.admin-logs-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--card-border);
+  white-space: nowrap;
+}
+
+.admin-logs-table th {
+  background: rgba(0, 0, 0, 0.05);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+[data-theme='dark'] .admin-logs-table th {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.admin-logs-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-logs-table td {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+}
+
+.admin-logs-table tr:hover td {
+  background: var(--accent-light);
+}
+
+.admin-logs-table .log-actor,
+.admin-logs-table .log-target {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.admin-logs-table .log-action-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.admin-logs-table .log-action-badge.approval {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.admin-logs-table .log-action-badge.rejection {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.admin-logs-table .log-action-badge.deletion {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-muted);
+}
+
+
