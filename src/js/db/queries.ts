@@ -81,6 +81,7 @@ async function createGuestbookEntry(name: string, message: string, mood: string 
 /**
  * Checks the number of submissions the user has made over rolling and calendar intervals.
  * Limits: 1/day, 3/week, 10/month, 50/lifetime approved.
+ * Bypasses checks if user has 'admin' role (allowing unlimited testing).
  */
 async function checkUserSubmissionLimits() {
   if (!supabase) {
@@ -91,6 +92,27 @@ async function checkUserSubmissionLimits() {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     throw new Error('User session not found.');
+  }
+
+  // 1. Fetch user role to check for admin/developer bypass
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single() as any;
+
+  if (profileError) {
+    console.error('Error fetching user profile role:', profileError);
+  }
+
+  // If user is an admin, return 0 counts to bypass all rate limit checks
+  if (profile && profile.role === 'admin') {
+    return {
+      dailyCount: 0,
+      weeklyCount: 0,
+      monthlyCount: 0,
+      lifetimeCount: 0
+    };
   }
 
   const now = new Date();
