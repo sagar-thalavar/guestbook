@@ -43,9 +43,44 @@ async function getSignedSelfieUrl(filePath: string) {
 }
 
 /**
- * Create a new guestbook entry in the database.
+ * Upload a selfie image blob to the private 'selfies' Supabase Storage bucket.
+ * Folder structure: [userId]/[entryId]_[timestamp].jpg
  */
-async function createGuestbookEntry(name: string, message: string, mood: string | null, consentGiven: boolean) {
+async function uploadSelfie(blob: Blob, entryId: string, userId: string): Promise<string> {
+  if (!supabase) {
+    throw new Error('Supabase client is not configured.');
+  }
+
+  const timestamp = Date.now();
+  const filePath = `${userId}/${entryId}_${timestamp}.jpg`;
+
+  const { error } = await supabase.storage
+    .from('selfies')
+    .upload(filePath, blob, {
+      contentType: 'image/jpeg',
+      cacheControl: '3600',
+      upsert: true
+    });
+
+  if (error) {
+    console.error('Error uploading selfie to storage:', error);
+    throw error;
+  }
+
+  return filePath;
+}
+
+/**
+ * Create a new guestbook entry in the database.
+ * If a selfie Blob is provided, it is uploaded to storage, and the row is updated.
+ */
+async function createGuestbookEntry(
+  name: string, 
+  message: string, 
+  mood: string | null, 
+  consentGiven: boolean,
+  selfieBlob: Blob | null = null
+) {
   if (!supabase) {
     throw new Error('Supabase client is not configured.');
   }
@@ -56,8 +91,9 @@ async function createGuestbookEntry(name: string, message: string, mood: string 
     throw new Error('User session not found. Please sign in again.');
   }
 
-  const { data, error } = await supabase
-    .from('guestbook_entries')
+  // 1. Insert database record (initially without selfie_url)
+  const { data, error } = await (supabase
+    .from('guestbook_entries') as any)
     .insert([
       {
         user_id: user.id,
@@ -67,7 +103,7 @@ async function createGuestbookEntry(name: string, message: string, mood: string 
         consent_given: consentGiven,
         status: 'pending' // always created as pending review
       }
-    ] as any)
+    ])
     .select();
 
   if (error) {
@@ -75,7 +111,31 @@ async function createGuestbookEntry(name: string, message: string, mood: string 
     throw error;
   }
 
-  return data ? data[0] : null;
+  const newEntry = (data ? data[0] : null) as any;
+  if (!newEntry) {
+    throw new Error('Failed to create guestbook entry record.');
+  }
+
+  // 2. If a selfie was captured, upload to storage and update the database row
+  if (selfieBlob) {
+    try {
+      const filePath = await uploadSelfie(selfieBlob, newEntry.id, user.id);
+      
+      const { data: updatedData, error: updateError } = await (supabase
+        .from('guestbook_entries') as any)
+        .update({ selfie_url: filePath })
+        .eq('id', newEntry.id)
+        .select();
+
+      if (updateError) throw updateError;
+      return updatedData ? updatedData[0] : newEntry;
+    } catch (uploadError) {
+      console.error('Failed to upload selfie, database record left with null photo:', uploadError);
+      return newEntry;
+    }
+  }
+
+  return newEntry;
 }
 
 /**

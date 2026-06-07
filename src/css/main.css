@@ -1083,3 +1083,90 @@ p {
   flex-shrink: 0;
   color: var(--danger);
 }
+
+/* --- Camera Widget & Selfie Upload --- */
+.camera-widget-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.camera-stream-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  background: rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+[data-theme='dark'] .camera-stream-wrapper {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+#camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror camera stream */
+}
+
+#camera-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 40px 20px;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+}
+
+.camera-placeholder-icon {
+  color: var(--text-muted);
+  opacity: 0.6;
+  transition: transform var(--transition-normal);
+}
+
+.camera-stream-wrapper:hover .camera-placeholder-icon {
+  transform: scale(1.1);
+  color: var(--text-secondary);
+}
+
+.camera-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.camera-fallback-wrapper {
+  display: inline-flex;
+}
+
+.btn-upload-label {
+  display: inline-flex;
+  cursor: pointer;
+  user-select: none;
+}
+

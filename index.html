@@ -170,6 +170,40 @@
             <input type="text" id="input-entry-name" class="form-input" placeholder="Enter your name" required>
           </div>
 
+          <!-- Selfie Camera (Optional) -->
+          <div class="form-group">
+            <label>Add a Photo Memory (Selfie)</label>
+            <div class="camera-widget-container">
+              <!-- Stream or Preview view -->
+              <div class="camera-stream-wrapper" id="camera-stream-wrapper">
+                <video id="camera-video" autoplay playsinline style="display: none;"></video>
+                <div class="camera-placeholder" id="camera-placeholder">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="camera-placeholder-icon">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                  <span>Camera not active</span>
+                </div>
+                <img id="camera-preview" alt="Selfie Snapshot Preview" style="display: none;" />
+              </div>
+              
+              <!-- Action triggers -->
+              <div class="camera-actions-row">
+                <button type="button" id="btn-camera-start" class="btn-secondary">Start Camera</button>
+                <button type="button" id="btn-camera-capture" class="btn-primary" style="display: none;">Take Photo</button>
+                <button type="button" id="btn-camera-reset" class="btn-secondary" style="display: none;">Retake Photo</button>
+                
+                <!-- Fallback file upload -->
+                <div class="camera-fallback-wrapper" id="camera-fallback-wrapper">
+                  <label for="input-camera-fallback" class="btn-secondary btn-upload-label">
+                    Upload Photo Instead
+                  </label>
+                  <input type="file" id="input-camera-fallback" accept="image/*" style="display: none;">
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Mood Selector (Optional) -->
           <div class="form-group">
             <label>How are you feeling today?</label>

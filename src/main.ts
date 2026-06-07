@@ -7,6 +7,12 @@ import {
 } from './js/auth/auth';
 import { createGuestbookEntry } from './js/db/queries';
 import { showView, updateNavigation } from './js/ui';
+import { 
+  startWebcam, 
+  stopWebcam, 
+  captureFrame, 
+  processUploadedFile 
+} from './js/components/camera';
 
 // Theme management helpers
 function initTheme() {
@@ -44,6 +50,39 @@ let currentUser: any = null;
 
 // Track selected mood inside the form
 let selectedMood: string | null = null;
+
+// Track captured/uploaded selfie blob
+let activeSelfieBlob: Blob | null = null;
+
+// Reset the camera UI to its initial state
+function resetCameraUI() {
+  stopWebcam();
+  activeSelfieBlob = null;
+  
+  const video = document.getElementById('camera-video') as HTMLVideoElement;
+  const placeholder = document.getElementById('camera-placeholder') as HTMLElement;
+  const preview = document.getElementById('camera-preview') as HTMLImageElement;
+  const btnStart = document.getElementById('btn-camera-start') as HTMLButtonElement;
+  const btnCapture = document.getElementById('btn-camera-capture') as HTMLButtonElement;
+  const btnReset = document.getElementById('btn-camera-reset') as HTMLButtonElement;
+  const fallbackWrapper = document.getElementById('camera-fallback-wrapper') as HTMLElement;
+  const fallbackInput = document.getElementById('input-camera-fallback') as HTMLInputElement;
+  
+  if (video) {
+    video.style.display = 'none';
+    video.srcObject = null;
+  }
+  if (placeholder) placeholder.style.display = 'flex';
+  if (preview) {
+    preview.style.display = 'none';
+    preview.src = '';
+  }
+  if (btnStart) btnStart.style.display = 'inline-flex';
+  if (btnCapture) btnCapture.style.display = 'none';
+  if (btnReset) btnReset.style.display = 'none';
+  if (fallbackWrapper) fallbackWrapper.style.display = 'inline-flex';
+  if (fallbackInput) fallbackInput.value = '';
+}
 
 // DOM Setup
 document.addEventListener('DOMContentLoaded', () => {
@@ -147,11 +186,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnCreateEntryTrigger) {
     btnCreateEntryTrigger.addEventListener('click', () => {
       showView('create-entry');
+      resetCameraUI();
     });
   }
 
   if (btnCancelEntry) {
     btnCancelEntry.addEventListener('click', () => {
+      resetCameraUI();
       showView('dashboard', currentUser);
     });
   }
@@ -208,6 +249,144 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // 7.5. Selfie Camera Event Listeners
+  const btnCameraStart = document.getElementById('btn-camera-start');
+  const btnCameraCapture = document.getElementById('btn-camera-capture');
+  const btnCameraReset = document.getElementById('btn-camera-reset');
+  const cameraVideo = document.getElementById('camera-video') as HTMLVideoElement;
+  const cameraPlaceholder = document.getElementById('camera-placeholder');
+  const cameraPreview = document.getElementById('camera-preview') as HTMLImageElement;
+  const cameraFallbackWrapper = document.getElementById('camera-fallback-wrapper');
+  const inputCameraFallback = document.getElementById('input-camera-fallback') as HTMLInputElement;
+
+  if (btnCameraStart) {
+    btnCameraStart.addEventListener('click', async () => {
+      if (!cameraVideo) return;
+      try {
+        if (btnCameraStart instanceof HTMLButtonElement) {
+          btnCameraStart.disabled = true;
+          btnCameraStart.textContent = 'Accessing...';
+        }
+        await startWebcam(cameraVideo);
+        
+        cameraVideo.style.display = 'block';
+        if (cameraPlaceholder) cameraPlaceholder.style.display = 'none';
+        if (cameraPreview) cameraPreview.style.display = 'none';
+        if (btnCameraStart) btnCameraStart.style.display = 'none';
+        if (btnCameraCapture) btnCameraCapture.style.display = 'inline-flex';
+        if (btnCameraReset) btnCameraReset.style.display = 'none';
+      } catch (err: any) {
+        console.error('Webcam access failed:', err);
+        alert(`Could not access webcam: ${err.message || 'Permission denied or no device found.'}\nPlease use the file upload option instead.`);
+      } finally {
+        if (btnCameraStart instanceof HTMLButtonElement) {
+          btnCameraStart.disabled = false;
+          btnCameraStart.textContent = 'Start Camera';
+        }
+      }
+    });
+  }
+
+  if (btnCameraCapture) {
+    btnCameraCapture.addEventListener('click', async () => {
+      if (!cameraVideo || !cameraPreview) return;
+      try {
+        const blob = await captureFrame(cameraVideo);
+        activeSelfieBlob = blob;
+        
+        cameraPreview.src = URL.createObjectURL(blob);
+        cameraPreview.style.display = 'block';
+        
+        stopWebcam();
+        
+        cameraVideo.style.display = 'none';
+        if (btnCameraCapture) btnCameraCapture.style.display = 'none';
+        if (btnCameraReset) {
+          btnCameraReset.style.display = 'inline-flex';
+          btnCameraReset.textContent = 'Retake Photo';
+        }
+        if (cameraFallbackWrapper) cameraFallbackWrapper.style.display = 'none';
+      } catch (err: any) {
+        console.error('Frame capture failed:', err);
+        alert(`Failed to capture photo: ${err.message || 'Unknown error'}`);
+      }
+    });
+  }
+
+  if (btnCameraReset) {
+    btnCameraReset.addEventListener('click', async () => {
+      const isFallback = inputCameraFallback && inputCameraFallback.value !== '';
+      
+      activeSelfieBlob = null;
+      if (cameraPreview) {
+        cameraPreview.src = '';
+        cameraPreview.style.display = 'none';
+      }
+      if (inputCameraFallback) inputCameraFallback.value = '';
+
+      if (isFallback) {
+        resetCameraUI();
+      } else if (cameraVideo) {
+        try {
+          if (btnCameraReset instanceof HTMLButtonElement) {
+            btnCameraReset.disabled = true;
+            btnCameraReset.textContent = 'Accessing...';
+          }
+          await startWebcam(cameraVideo);
+          
+          cameraVideo.style.display = 'block';
+          if (cameraPlaceholder) cameraPlaceholder.style.display = 'none';
+          if (btnCameraStart) btnCameraStart.style.display = 'none';
+          if (btnCameraCapture) btnCameraCapture.style.display = 'inline-flex';
+          if (btnCameraReset) btnCameraReset.style.display = 'none';
+          if (cameraFallbackWrapper) cameraFallbackWrapper.style.display = 'inline-flex';
+        } catch (err: any) {
+          console.error('Webcam restart failed:', err);
+          alert(`Could not access webcam: ${err.message || 'Permission denied or no device found.'}`);
+          resetCameraUI();
+        } finally {
+          if (btnCameraReset instanceof HTMLButtonElement) {
+            btnCameraReset.disabled = false;
+            btnCameraReset.textContent = 'Retake Photo';
+          }
+        }
+      } else {
+        resetCameraUI();
+      }
+    });
+  }
+
+  if (inputCameraFallback) {
+    inputCameraFallback.addEventListener('change', async (e) => {
+      const target = e.target as HTMLInputElement;
+      if (!target.files || target.files.length === 0) return;
+      
+      const file = target.files[0];
+      try {
+        const blob = await processUploadedFile(file);
+        activeSelfieBlob = blob;
+        
+        stopWebcam();
+        if (cameraVideo) cameraVideo.style.display = 'none';
+        if (cameraPlaceholder) cameraPlaceholder.style.display = 'none';
+        
+        cameraPreview.src = URL.createObjectURL(blob);
+        cameraPreview.style.display = 'block';
+        
+        if (btnCameraStart) btnCameraStart.style.display = 'none';
+        if (btnCameraCapture) btnCameraCapture.style.display = 'none';
+        if (btnCameraReset) {
+          btnCameraReset.style.display = 'inline-flex';
+          btnCameraReset.textContent = 'Clear Photo';
+        }
+      } catch (err: any) {
+        console.error('File process failed:', err);
+        alert(`Failed to upload photo: ${err.message || 'File must be an image.'}`);
+        inputCameraFallback.value = '';
+      }
+    });
+  }
+
   // 8. Consent verification validation (enabling submit button)
   const consentModeration = document.getElementById('checkbox-consent-moderation') as HTMLInputElement;
   const consentStorage = document.getElementById('checkbox-consent-storage') as HTMLInputElement;
@@ -255,10 +434,11 @@ document.addEventListener('DOMContentLoaded', () => {
           btnSubmitEntry.textContent = 'Submitting...';
         }
 
-        await createGuestbookEntry(name, message, finalMood, true);
+        await createGuestbookEntry(name, message, finalMood, true, activeSelfieBlob);
         alert('Your entry was successfully submitted and is pending review!');
         
         // Return to dashboard
+        resetCameraUI();
         showView('dashboard', currentUser);
       } catch (err: any) {
         console.error('Failed to create guestbook entry:', err);
@@ -277,6 +457,8 @@ document.addEventListener('DOMContentLoaded', () => {
     onAuthChange((event, session) => {
       console.log(`Auth state change triggered: ${event}`);
       currentUser = session?.user || null;
+      
+      resetCameraUI();
       
       if (currentUser) {
         updateNavigation(currentUser);
