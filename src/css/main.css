@@ -182,13 +182,7 @@ a {
 
 /* --- Logged-In User Profile Navigation --- */
 .nav-user-email-text {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none; /* Hide email to prevent nav clutter */
 }
 
 .nav-signout-btn {
@@ -1055,6 +1049,51 @@ p {
   .dashboard-action-card .btn-primary {
     width: 100%;
   }
+
+  /* Responsive Top Header */
+  .top-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .app-nav {
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    gap: 12px;
+  }
+
+  #nav-user-profile {
+    width: 100%;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* Responsive Admin Tabs */
+  .admin-tab-btn {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+  }
+  .tab-badge {
+    margin-left: 4px;
+    padding: 1px 6px;
+    font-size: 0.68rem;
+  }
+
+  /* Responsive Admin Filters */
+  .admin-filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .admin-filters-bar .form-input,
+  .admin-filters-bar select.form-input,
+  .admin-filters-bar .btn-secondary {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 /* --- Rate Limit Warning Banner --- */
@@ -1178,6 +1217,12 @@ p {
   padding-bottom: 12px;
   margin-bottom: 20px;
   overflow-x: auto;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.admin-tabs-row::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari and Opera */
 }
 
 .admin-tab-btn {
