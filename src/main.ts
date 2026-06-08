@@ -435,6 +435,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (cameraPlaceholder && btnCameraStart) {
+    cameraPlaceholder.addEventListener('click', () => {
+      btnCameraStart.click();
+    });
+  }
+
   if (btnCameraCapture) {
     btnCameraCapture.addEventListener('click', async () => {
       if (!cameraVideo || !cameraPreview) return;
