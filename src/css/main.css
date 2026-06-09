@@ -14,6 +14,7 @@
   --bg: #f3f4f6;
   --card-bg: rgba(255, 255, 255, 0.75);
   --card-border: rgba(17, 24, 39, 0.07);
+  --select-opt-bg: #ffffff;
   
   --text-primary: #111827;
   --text-secondary: #374151;
@@ -51,6 +52,7 @@
   --bg: #030712;
   --card-bg: rgba(17, 24, 39, 0.45);
   --card-border: rgba(255, 255, 255, 0.06);
+  --select-opt-bg: #111827;
   
   --text-primary: #f9fafb;
   --text-secondary: #e5e7eb;
@@ -481,6 +483,12 @@ p {
   color: var(--text-primary);
   outline: none;
   transition: all 0.3s ease;
+}
+
+select option {
+  background-color: var(--select-opt-bg);
+  color: var(--text-primary);
+  font-family: inherit;
 }
 
 [data-theme='dark'] .form-input {
