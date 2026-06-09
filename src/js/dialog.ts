@@ -31,7 +31,7 @@ export function showAlert(message: string, title: string = 'Notification'): Prom
 
     const handleOk = () => {
       cleanup();
-      resolve();
+      setTimeout(resolve, 200);
     };
 
     const cleanup = () => {
@@ -72,12 +72,12 @@ export function showConfirm(message: string, title: string = 'Confirm'): Promise
 
     const handleOk = () => {
       cleanup();
-      resolve(true);
+      setTimeout(() => resolve(true), 200);
     };
 
     const handleCancel = () => {
       cleanup();
-      resolve(false);
+      setTimeout(() => resolve(false), 200);
     };
 
     const cleanup = () => {
@@ -128,12 +128,12 @@ export function showPrompt(message: string, placeholder: string = '', title: str
     const handleOk = () => {
       const val = modalInput.value;
       cleanup();
-      resolve(val);
+      setTimeout(() => resolve(val), 200);
     };
 
     const handleCancel = () => {
       cleanup();
-      resolve(null);
+      setTimeout(() => resolve(null), 200);
     };
 
     const cleanup = () => {
