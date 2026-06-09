@@ -158,7 +158,7 @@ serve(async (req) => {
       console.log(`Sending email to: ${emailTo} via Resend...`);
       
       const emailPayload = {
-        from: 'Guestbook <onboarding@resend.dev>',
+        from: 'Guestbook <admin@sagarthalavar.in>',
         to: [emailTo],
         subject: emailSubject,
         html: emailHtml,
