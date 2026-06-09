@@ -1,4 +1,5 @@
 import { hasValidConfig } from './db/supabaseClient';
+import { showConfirm } from './dialog';
 import { 
   fetchUserEntries, 
   getSignedSelfieUrl, 
@@ -1077,7 +1078,10 @@ function bindAdminAllActions(container: HTMLElement) {
       const entryId = button.getAttribute('data-id');
       if (!entryId) return;
 
-      const confirmed = confirm('Are you sure you want to delete this guestbook entry permanently? This action is irreversible.');
+      const confirmed = await showConfirm(
+        'Are you sure you want to delete this guestbook entry permanently? This action is irreversible.',
+        'Delete Entry'
+      );
       if (!confirmed) return;
 
       try {

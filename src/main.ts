@@ -25,6 +25,12 @@ import {
   captureFrame, 
   processUploadedFile 
 } from './js/components/camera';
+import { showAlert, showConfirm, showPrompt } from './js/dialog';
+
+// Override native browser alert with custom themed dialog
+(window as any).alert = function (message: string) {
+  showAlert(message);
+};
 
 // Theme management helpers
 function initTheme() {
@@ -250,13 +256,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnDeleteAccount = document.getElementById('btn-delete-account') as HTMLButtonElement;
   if (btnDeleteAccount) {
     btnDeleteAccount.addEventListener('click', async () => {
-      const confirmFirst = confirm(
-        'Are you absolutely sure you want to delete your Guestbook account?\n\nThis will permanently delete all your guestbook entries, uploaded photos, and profile logs. This action cannot be undone.'
+      const confirmFirst = await showConfirm(
+        'Are you absolutely sure you want to delete your Guestbook account?\n\nThis will permanently delete all your guestbook entries, uploaded photos, and profile logs. This action cannot be undone.',
+        'Delete Account'
       );
       if (!confirmFirst) return;
 
-      const confirmText = prompt(
-        "To confirm deletion, please type 'DELETE' in the input box below:"
+      const confirmText = await showPrompt(
+        "To confirm deletion, please type 'DELETE' in the input box below:",
+        'DELETE',
+        'Verify Deletion'
       );
       if (confirmText !== 'DELETE') {
         alert('Account deletion cancelled. Confirmation phrase did not match.');
