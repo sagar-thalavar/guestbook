@@ -377,8 +377,23 @@ function bindDashboardActionListeners(container: HTMLElement) {
         button.disabled = true;
         const signedUrl = await getSignedSelfieUrl(filePath);
         if (signedUrl) {
-          // Open image in a new tab to let user save/view
-          window.open(signedUrl, '_blank');
+          try {
+            const response = await fetch(signedUrl);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const filename = filePath.split('/').pop() || 'selfie.jpg';
+            
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+          } catch (fetchErr) {
+            console.error('Fetch download failed, falling back to tab:', fetchErr);
+            window.open(signedUrl, '_blank');
+          }
         } else {
           alert('Could not download image.');
         }
