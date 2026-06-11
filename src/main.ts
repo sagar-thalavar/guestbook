@@ -156,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. Auth Page Navigation Trigger Buttons
   const btnLoginRedirect = document.getElementById('btn-login-redirect');
-  const btnLoginBack = document.getElementById('btn-login-back');
   const btnSignOut = document.getElementById('btn-nav-signout');
 
   const navigateToLogin = () => {
@@ -177,13 +176,18 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnBackHome) {
     btnBackHome.addEventListener('click', (e) => {
       e.preventDefault();
-      window.history.back();
+      const welcomeSection = document.getElementById('hero-welcome');
+      const isWelcomeActive = welcomeSection && welcomeSection.style.display !== 'none';
+      if (isWelcomeActive) {
+        window.history.back();
+      } else {
+        goBack(currentUser);
+      }
     });
   }
 
   const btnNavArchive = document.getElementById('btn-nav-archive');
   const btnViewArchive = document.getElementById('btn-view-archive');
-  const btnArchiveBack = document.getElementById('btn-archive-back');
 
   if (btnNavArchive) {
     btnNavArchive.addEventListener('click', () => {
@@ -194,18 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnViewArchive) {
     btnViewArchive.addEventListener('click', () => {
       showView('archive', currentUser);
-    });
-  }
-
-  if (btnArchiveBack) {
-    btnArchiveBack.addEventListener('click', () => {
-      goBack(currentUser);
-    });
-  }
-
-  if (btnLoginBack) {
-    btnLoginBack.addEventListener('click', () => {
-      goBack(currentUser);
     });
   }
 
