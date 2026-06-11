@@ -155,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. Auth Page Navigation Trigger Buttons
   const btnLoginRedirect = document.getElementById('btn-login-redirect');
-  const btnLoginRedirectFeed = document.getElementById('btn-login-redirect-feed');
   const btnLoginBack = document.getElementById('btn-login-back');
   const btnSignOut = document.getElementById('btn-nav-signout');
 
@@ -171,10 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnLoginRedirect) {
     btnLoginRedirect.addEventListener('click', navigateToLogin);
-  }
-
-  if (btnLoginRedirectFeed) {
-    btnLoginRedirectFeed.addEventListener('click', navigateToLogin);
   }
 
   const btnNavArchive = document.getElementById('btn-nav-archive');

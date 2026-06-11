@@ -59,7 +59,7 @@ async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-en
     await loadAdminDashboard();
   } else if (viewName === 'archive' && archiveSection) {
     archiveSection.style.display = 'block';
-    await renderPublicFeed(user);
+    await renderPublicFeed();
   }
 }
 
@@ -1205,15 +1205,10 @@ function exportAdminEntriesToCSV() {
 /**
  * Loads and renders public approved entries on the landing welcome page.
  */
-async function renderPublicFeed(user?: any) {
+async function renderPublicFeed() {
   const feedList = document.getElementById('public-feed-list');
   const feedContainer = document.getElementById('archive-panel');
-  const ctaBanner = document.getElementById('archive-cta-banner');
   if (!feedList || !feedContainer) return;
-
-  if (ctaBanner) {
-    ctaBanner.style.display = user ? 'none' : 'block';
-  }
 
   feedList.innerHTML = `
     <div class="writings-state-container" style="grid-column: 1 / -1;">
