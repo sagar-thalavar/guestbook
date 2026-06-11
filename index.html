@@ -30,7 +30,15 @@
       </div>
       
       <div class="app-nav" id="main-navigation">
-        
+        <!-- Wall of Memories Nav Button -->
+        <button id="btn-nav-archive" class="btn-text-action" style="font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 9999px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); color: var(--text-primary); transition: all 0.2s ease; cursor: pointer; margin-right: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+          </svg>
+          <span>Wall of Memories</span>
+        </button>
+
         <!-- User Profile Nav Container (Dropdown Menu) -->
         <div id="nav-user-profile" class="profile-dropdown-container" style="display: none;">
           <button type="button" class="dropdown-trigger" id="dropdown-menu-btn" aria-label="Toggle user menu">
@@ -83,31 +91,33 @@
         </div>
         <h1 class="hero-title">A visitor journal of moments, memories, and connections.</h1>
         <p class="hero-subtitle">Capture your visit with a photo, a mood, and a short message to create an everlasting memory. Share it on our public wall or keep it private.</p>
-        <div class="hero-actions">
+        <div class="hero-actions" style="display: flex; gap: 12px; align-items: center; justify-content: center; width: 100%;">
           <button id="btn-login-redirect" class="btn-primary">Sign In to Leave an Entry</button>
+          <button id="btn-view-archive" class="btn-secondary">View Wall of Memories</button>
         </div>
       </section>
 
-      <!-- VIEW 1.5: Public Memories Wall -->
-      <section class="panel glass projects-panel animate-fade-in" id="public-feed-panel" style="display: none; margin-top: 32px;">
-        <div class="section-header" style="margin-bottom: 24px;">
-          <div class="section-title-group" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <h2 style="font-size: 1.5rem; font-family: var(--font-heading); color: var(--text-primary);">Wall of Memories</h2>
-            <span class="entry-visibility-badge public" style="text-transform: capitalize; font-size: 0.72rem; padding: 4px 10px;">
-              <span class="visibility-dot"></span>
-              Public Feed
-            </span>
+      <!-- VIEW 1.5: Public Memories Wall (Archive View) -->
+      <section class="panel glass projects-panel animate-fade-in" id="archive-panel" style="display: none; position: relative;">
+        <div class="section-header" style="margin-bottom: 24px; text-align: center;">
+          <!-- Back Button to navigate away from the archive -->
+          <button id="btn-archive-back" class="btn-text-action" style="position: absolute; top: 24px; left: 24px; font-size: 0.88rem;">
+            &larr; Back
+          </button>
+          
+          <div class="section-title-group" style="margin-top: 24px;">
+            <h2>Wall of Memories</h2>
           </div>
-          <p class="section-subtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">A collection of shared moments from our visitors.</p>
+          <p class="section-subtitle">A collection of shared moments from our visitors.</p>
         </div>
 
-        <div id="public-feed-list" class="public-entries-grid">
-          <!-- Public entries will render here -->
+        <div id="public-feed-list" class="public-entries-grid" style="margin-top: 32px;">
+          <!-- Public entries will render here as a collage/grid -->
         </div>
 
-        <!-- Call to Action (Login to make entry) -->
-        <div class="public-feed-cta-banner" style="margin-top: 32px; padding: 20px; border-radius: 12px; border: 1px dashed var(--card-border); background: rgba(255, 255, 255, 0.02); text-align: center;">
-          <p style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 12px;">Want to capture a memory and add your own selfie to this wall?</p>
+        <!-- Call to Action Banner (Only visible if the visitor is not logged in) -->
+        <div id="archive-cta-banner" class="public-feed-cta-banner" style="margin-top: 48px; padding: 24px; border-radius: 12px; border: 1px dashed var(--card-border); background: rgba(255, 255, 255, 0.02); text-align: center;">
+          <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 12px;">Want to capture a memory and add your own selfie to this wall?</p>
           <button id="btn-login-redirect-feed" class="btn-primary" style="padding: 10px 20px; font-size: 0.88rem;">Sign In to Leave an Entry</button>
         </div>
       </section>
@@ -415,6 +425,46 @@
       <div class="modal-actions">
         <button id="modal-btn-cancel" class="btn-secondary">Cancel</button>
         <button id="modal-btn-ok" class="btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Memory Detail Modal -->
+  <div id="memory-detail-modal" class="modal-overlay" style="display: none; justify-content: center; align-items: center; z-index: 1100;">
+    <div class="modal-card glass memory-modal-card" style="max-width: 500px; width: 90%; padding: 0; overflow: hidden; border-radius: 16px; position: relative;">
+      <!-- Close button -->
+      <button id="btn-close-memory-modal" style="position: absolute; top: 16px; right: 16px; background: rgba(0, 0, 0, 0.5); border: none; border-radius: 50%; width: 32px; height: 32px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; z-index: 10;">
+        &times;
+      </button>
+      
+      <!-- Enlarged selfie image -->
+      <div class="memory-modal-image-container" style="position: relative; width: 100%; aspect-ratio: 4/3; background: #000; display: flex; align-items: center; justify-content: center;">
+        <div class="selfie-loader-spinner" id="memory-modal-spinner" style="position: absolute;"></div>
+        <img id="memory-modal-image" src="" alt="Visitor selfie" style="width: 100%; height: 100%; object-fit: cover; display: none;" />
+      </div>
+
+      <!-- Details section -->
+      <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+          <div>
+            <h3 id="memory-modal-name" style="font-size: 1.25rem; font-family: var(--font-heading); color: var(--text-primary); margin: 0;"></h3>
+            <span id="memory-modal-date" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; display: block;"></span>
+          </div>
+          <span id="memory-modal-mood" class="tag-pill"></span>
+        </div>
+        
+        <p id="memory-modal-message" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-secondary); margin: 0; font-style: italic;"></p>
+        
+        <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+          <button id="memory-modal-download-btn" class="btn-primary" style="padding: 8px 16px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download Photo
+          </button>
+        </div>
       </div>
     </div>
   </div>

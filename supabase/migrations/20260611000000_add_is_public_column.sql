@@ -7,3 +7,16 @@ CREATE POLICY "Allow public to view approved public entries"
 ON public.guestbook_entries 
 FOR SELECT 
 USING (status = 'approved' AND is_public = true);
+
+-- Storage Policy to allow anyone (public) to view approved public selfies
+CREATE POLICY "Allow anyone to view approved public selfies"
+ON storage.objects FOR SELECT
+USING (
+  bucket_id = 'selfies'
+  AND EXISTS (
+    SELECT 1 FROM public.guestbook_entries
+    WHERE selfie_url = name
+      AND status = 'approved'
+      AND is_public = true
+  )
+);

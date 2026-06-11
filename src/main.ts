@@ -177,6 +177,32 @@ document.addEventListener('DOMContentLoaded', () => {
     btnLoginRedirectFeed.addEventListener('click', navigateToLogin);
   }
 
+  const btnNavArchive = document.getElementById('btn-nav-archive');
+  const btnViewArchive = document.getElementById('btn-view-archive');
+  const btnArchiveBack = document.getElementById('btn-archive-back');
+
+  if (btnNavArchive) {
+    btnNavArchive.addEventListener('click', () => {
+      showView('archive', currentUser);
+    });
+  }
+
+  if (btnViewArchive) {
+    btnViewArchive.addEventListener('click', () => {
+      showView('archive', currentUser);
+    });
+  }
+
+  if (btnArchiveBack) {
+    btnArchiveBack.addEventListener('click', () => {
+      if (currentUser) {
+        showView('dashboard', currentUser);
+      } else {
+        showView('welcome');
+      }
+    });
+  }
+
   if (btnLoginBack) {
     btnLoginBack.addEventListener('click', () => {
       showView('welcome');

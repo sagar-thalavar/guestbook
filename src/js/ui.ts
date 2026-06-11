@@ -17,31 +17,27 @@ let cachedLimits: { dailyCount: number; weeklyCount: number; monthlyCount: numbe
 /**
  * Hides all main view sections and shows only the targeted view.
  */
-async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-entry' | 'admin', user?: any) {
+async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-entry' | 'admin' | 'archive', user?: any) {
   const welcomeSection = document.getElementById('hero-welcome');
   const loginSection = document.getElementById('login-panel');
   const dashboardSection = document.getElementById('dashboard-panel');
   const createEntrySection = document.getElementById('create-entry-panel');
   const adminSection = document.getElementById('admin-panel');
   const aboutProjectSection = document.getElementById('about-project');
-  const publicFeedSection = document.getElementById('public-feed-panel');
+  const archiveSection = document.getElementById('archive-panel');
 
   if (welcomeSection) welcomeSection.style.display = 'none';
   if (loginSection) loginSection.style.display = 'none';
   if (dashboardSection) dashboardSection.style.display = 'none';
   if (createEntrySection) createEntrySection.style.display = 'none';
   if (adminSection) adminSection.style.display = 'none';
-  if (publicFeedSection) publicFeedSection.style.display = 'none';
+  if (archiveSection) archiveSection.style.display = 'none';
   if (aboutProjectSection) {
-    aboutProjectSection.style.display = (viewName === 'admin') ? 'none' : 'block';
+    aboutProjectSection.style.display = (viewName === 'admin' || viewName === 'archive') ? 'none' : 'block';
   }
 
   if (viewName === 'welcome' && welcomeSection) {
     welcomeSection.style.display = 'block';
-    if (publicFeedSection) {
-      publicFeedSection.style.display = 'block';
-      await renderPublicFeed();
-    }
   } else if (viewName === 'login' && loginSection) {
     loginSection.style.display = 'block';
   } else if (viewName === 'dashboard' && dashboardSection) {
@@ -61,6 +57,9 @@ async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-en
   } else if (viewName === 'admin' && adminSection) {
     adminSection.style.display = 'block';
     await loadAdminDashboard();
+  } else if (viewName === 'archive' && archiveSection) {
+    archiveSection.style.display = 'block';
+    await renderPublicFeed(user);
   }
 }
 
@@ -1206,10 +1205,15 @@ function exportAdminEntriesToCSV() {
 /**
  * Loads and renders public approved entries on the landing welcome page.
  */
-async function renderPublicFeed() {
+async function renderPublicFeed(user?: any) {
   const feedList = document.getElementById('public-feed-list');
-  const feedContainer = document.getElementById('public-feed-panel');
+  const feedContainer = document.getElementById('archive-panel');
+  const ctaBanner = document.getElementById('archive-cta-banner');
   if (!feedList || !feedContainer) return;
+
+  if (ctaBanner) {
+    ctaBanner.style.display = user ? 'none' : 'block';
+  }
 
   feedList.innerHTML = `
     <div class="writings-state-container" style="grid-column: 1 / -1;">
@@ -1223,11 +1227,11 @@ async function renderPublicFeed() {
     feedList.innerHTML = '';
 
     if (!entries || entries.length === 0) {
-      feedContainer.style.display = 'none';
+      feedList.innerHTML = `
+        <p class="empty-helper" style="grid-column: 1 / -1;">No public memories shared yet. Be the first!</p>
+      `;
       return;
     }
-
-    feedContainer.style.display = 'block';
 
     entries.forEach((entry: any) => {
       const card = createPublicEntryCard(entry);
@@ -1235,6 +1239,13 @@ async function renderPublicFeed() {
       if (entry.selfie_url) {
         loadCardSelfie(card, entry.selfie_url);
       }
+
+      // Open detail modal when clicking anywhere on the card (except download button)
+      card.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('.btn-download')) return;
+        openMemoryDetailModal(entry);
+      });
     });
 
     // Bind action listeners (like download actions) for dynamically rendered elements
@@ -1256,11 +1267,121 @@ async function renderPublicFeed() {
 }
 
 /**
+ * Opens the memory detail modal for public entries.
+ */
+async function openMemoryDetailModal(entry: any) {
+  const modal = document.getElementById('memory-detail-modal');
+  const modalImg = document.getElementById('memory-modal-image') as HTMLImageElement;
+  const modalSpinner = document.getElementById('memory-modal-spinner');
+  const modalName = document.getElementById('memory-modal-name');
+  const modalDate = document.getElementById('memory-modal-date');
+  const modalMood = document.getElementById('memory-modal-mood');
+  const modalMessage = document.getElementById('memory-modal-message');
+  const downloadBtn = document.getElementById('memory-modal-download-btn') as HTMLButtonElement;
+
+  if (!modal) return;
+
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+  const formattedDate = new Date(entry.created_at).toLocaleDateString(undefined, dateOptions);
+
+  if (modalName) modalName.textContent = entry.original_name;
+  if (modalDate) modalDate.textContent = formattedDate;
+  if (modalMessage) modalMessage.textContent = `"${entry.message}"`;
+
+  // Mood tag
+  if (modalMood) {
+    if (entry.mood) {
+      modalMood.textContent = entry.mood;
+      modalMood.style.display = 'inline-block';
+    } else {
+      modalMood.style.display = 'none';
+    }
+  }
+
+  // Setup download action on click
+  if (downloadBtn) {
+    if (entry.selfie_url) {
+      downloadBtn.style.display = 'inline-flex';
+      downloadBtn.onclick = async (e) => {
+        e.stopPropagation();
+        try {
+          downloadBtn.disabled = true;
+          const signedUrl = await getSignedSelfieUrl(entry.selfie_url);
+          if (signedUrl) {
+            try {
+              const response = await fetch(signedUrl);
+              const blob = await response.blob();
+              const blobUrl = URL.createObjectURL(blob);
+              const filename = entry.selfie_url.split('/').pop() || 'selfie.jpg';
+              
+              const link = document.createElement('a');
+              link.href = blobUrl;
+              link.download = filename;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(blobUrl);
+            } catch (fetchErr) {
+              console.error('Fetch download failed, falling back to tab:', fetchErr);
+              window.open(signedUrl, '_blank');
+            }
+          } else {
+            alert('Could not download image.');
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          downloadBtn.disabled = false;
+        }
+      };
+    } else {
+      downloadBtn.style.display = 'none';
+      downloadBtn.onclick = null;
+    }
+  }
+
+  // Handle image loading
+  if (modalImg && modalSpinner) {
+    modalImg.style.display = 'none';
+    if (entry.selfie_url) {
+      modalSpinner.style.display = 'block';
+      try {
+        const signedUrl = await getSignedSelfieUrl(entry.selfie_url);
+        if (signedUrl) {
+          modalImg.src = signedUrl;
+          modalImg.onload = () => {
+            modalSpinner.style.display = 'none';
+            modalImg.style.display = 'block';
+          };
+        } else {
+          modalSpinner.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('Failed to load signed URL in modal:', err);
+        modalSpinner.style.display = 'none';
+      }
+    } else {
+      modalSpinner.style.display = 'none';
+      modalImg.src = '';
+    }
+  }
+
+  modal.style.display = 'flex';
+}
+
+/**
  * Creates the DOM element for a single public guestbook entry card.
  */
 function createPublicEntryCard(entry: any): HTMLElement {
   const card = document.createElement('div');
   card.className = 'entry-card glass-hover animate-fade-in';
+  card.style.cursor = 'pointer';
   
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
@@ -1308,6 +1429,20 @@ function createPublicEntryCard(entry: any): HTMLElement {
     </div>
   `;
   return card;
+}
+
+// Initialize memory detail modal close actions
+const detailModal = document.getElementById('memory-detail-modal');
+const closeDetailModalBtn = document.getElementById('btn-close-memory-modal');
+if (closeDetailModalBtn && detailModal) {
+  closeDetailModalBtn.addEventListener('click', () => {
+    detailModal.style.display = 'none';
+  });
+  detailModal.addEventListener('click', (e) => {
+    if (e.target === detailModal) {
+      detailModal.style.display = 'none';
+    }
+  });
 }
 
 export {
