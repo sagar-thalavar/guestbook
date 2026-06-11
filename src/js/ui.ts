@@ -150,6 +150,11 @@ function updateNavigation(user: any | null, isAdmin: boolean = false) {
   const navUserEmail = document.getElementById('nav-user-email');
   const btnNavAdmin = document.getElementById('btn-nav-admin');
 
+  const btnLoginRedirect = document.getElementById('btn-login-redirect');
+  if (btnLoginRedirect) {
+    btnLoginRedirect.textContent = user ? 'Go to Dashboard' : 'Sign In to Leave an Entry';
+  }
+
   if (user) {
     // Hide connection status, show profile controls
     if (statusIndicator) statusIndicator.style.display = 'none';

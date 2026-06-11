@@ -159,7 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSignOut = document.getElementById('btn-nav-signout');
 
   const navigateToLogin = () => {
-    if (!hasValidConfig) {
+    if (currentUser) {
+      showView('dashboard', currentUser);
+    } else if (!hasValidConfig) {
       alert(
         'Please set up your Supabase project URL and anon key in the `.env` file first to configure the database.'
       );
@@ -178,7 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const welcomeSection = document.getElementById('hero-welcome');
       const isWelcomeActive = welcomeSection && welcomeSection.style.display !== 'none';
-      if (isWelcomeActive) {
+      const dashboardSection = document.getElementById('dashboard-panel');
+      const isDashboardActive = dashboardSection && dashboardSection.style.display !== 'none';
+      if (isWelcomeActive || isDashboardActive) {
         window.history.back();
       } else {
         goBack(currentUser);
