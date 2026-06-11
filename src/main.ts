@@ -173,6 +173,14 @@ document.addEventListener('DOMContentLoaded', () => {
     btnLoginRedirect.addEventListener('click', navigateToLogin);
   }
 
+  const btnBackHome = document.getElementById('btn-back-home');
+  if (btnBackHome) {
+    btnBackHome.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.history.back();
+    });
+  }
+
   const btnNavArchive = document.getElementById('btn-nav-archive');
   const btnViewArchive = document.getElementById('btn-view-archive');
   const btnArchiveBack = document.getElementById('btn-archive-back');
