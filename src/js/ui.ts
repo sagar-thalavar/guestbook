@@ -14,10 +14,38 @@ import {
 // Cache limits data to prevent async file dialog issues on mobile devices
 let cachedLimits: { dailyCount: number; weeklyCount: number; monthlyCount: number; lifetimeCount: number } | null = null;
 
+// View navigation history tracking
+let viewHistory: ('welcome' | 'login' | 'dashboard' | 'create-entry' | 'admin' | 'archive')[] = ['welcome'];
+let isNavigatingBack = false;
+
+/**
+ * Navigates back to the previous view in history.
+ */
+function goBack(user?: any) {
+  if (viewHistory.length > 1) {
+    viewHistory.pop(); // Pop current view
+    const prevView = viewHistory[viewHistory.length - 1];
+    isNavigatingBack = true;
+    showView(prevView, user);
+  } else {
+    isNavigatingBack = true;
+    showView('welcome', user);
+  }
+}
+
 /**
  * Hides all main view sections and shows only the targeted view.
  */
 async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-entry' | 'admin' | 'archive', user?: any) {
+  // Update view history
+  if (viewName === 'welcome' || viewName === 'dashboard') {
+    viewHistory = [viewName];
+  } else if (!isNavigatingBack) {
+    if (viewHistory[viewHistory.length - 1] !== viewName) {
+      viewHistory.push(viewName);
+    }
+  }
+  isNavigatingBack = false;
   const welcomeSection = document.getElementById('hero-welcome');
   const loginSection = document.getElementById('login-panel');
   const dashboardSection = document.getElementById('dashboard-panel');
@@ -1448,5 +1476,6 @@ export {
   renderAdminAllTab,
   exportAdminEntriesToCSV,
   cachedLimits,
-  renderPublicFeed
+  renderPublicFeed,
+  goBack
 };

@@ -17,7 +17,8 @@ import {
   updateNavigation, 
   renderAdminAllTab, 
   exportAdminEntriesToCSV,
-  cachedLimits
+  cachedLimits,
+  goBack
 } from './js/ui';
 import { 
   startWebcam, 
@@ -190,17 +191,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnArchiveBack) {
     btnArchiveBack.addEventListener('click', () => {
-      if (currentUser) {
-        showView('dashboard', currentUser);
-      } else {
-        showView('welcome');
-      }
+      goBack(currentUser);
     });
   }
 
   if (btnLoginBack) {
     btnLoginBack.addEventListener('click', () => {
-      showView('welcome');
+      goBack(currentUser);
     });
   }
 
