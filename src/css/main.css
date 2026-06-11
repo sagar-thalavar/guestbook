@@ -1432,9 +1432,20 @@ select option {
   width: 100%;
 }
 
+.public-entries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
 @media (max-width: 640px) {
   .admin-entries-grid {
     grid-template-columns: 1fr;
+  }
+  .public-entries-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 

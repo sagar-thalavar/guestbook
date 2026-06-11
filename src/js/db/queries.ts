@@ -445,6 +445,30 @@ async function deleteUserAccount() {
   await supabase.auth.signOut();
 }
 
+/**
+ * Fetch all approved guestbook entries marked as public.
+ * Accessible to anonymous/unauthenticated public users.
+ */
+async function fetchPublicEntries() {
+  if (!supabase) {
+    throw new Error('Supabase client is not configured.');
+  }
+
+  const { data, error } = await supabase
+    .from('guestbook_entries')
+    .select('*')
+    .eq('status', 'approved')
+    .eq('is_public', true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching public entries:', error);
+    throw error;
+  }
+
+  return data;
+}
+
 export {
   fetchUserEntries,
   getSignedSelfieUrl,
@@ -456,5 +480,7 @@ export {
   deleteGuestbookEntry,
   fetchAuditLogs,
   replaceGuestbookEntry,
-  deleteUserAccount
+  deleteUserAccount,
+  fetchPublicEntries
 };
+

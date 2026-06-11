@@ -155,19 +155,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. Auth Page Navigation Trigger Buttons
   const btnLoginRedirect = document.getElementById('btn-login-redirect');
+  const btnLoginRedirectFeed = document.getElementById('btn-login-redirect-feed');
   const btnLoginBack = document.getElementById('btn-login-back');
   const btnSignOut = document.getElementById('btn-nav-signout');
 
+  const navigateToLogin = () => {
+    if (!hasValidConfig) {
+      alert(
+        'Please set up your Supabase project URL and anon key in the `.env` file first to configure the database.'
+      );
+    } else {
+      showView('login');
+    }
+  };
+
   if (btnLoginRedirect) {
-    btnLoginRedirect.addEventListener('click', () => {
-      if (!hasValidConfig) {
-        alert(
-          'Please set up your Supabase project URL and anon key in the `.env` file first to configure the database.'
-        );
-      } else {
-        showView('login');
-      }
-    });
+    btnLoginRedirect.addEventListener('click', navigateToLogin);
+  }
+
+  if (btnLoginRedirectFeed) {
+    btnLoginRedirectFeed.addEventListener('click', navigateToLogin);
   }
 
   if (btnLoginBack) {

@@ -81,10 +81,34 @@
           <div class="badge-pulse"></div>
           <span class="badge-text" id="hero-badge-status">visitor journal</span>
         </div>
-        <h1 class="hero-title">A private record of moments, memories, and visits.</h1>
-        <p class="hero-subtitle">Capture your visit with a photo, a mood, and a short message to create an everlasting memory.</p>
+        <h1 class="hero-title">A visitor journal of moments, memories, and connections.</h1>
+        <p class="hero-subtitle">Capture your visit with a photo, a mood, and a short message to create an everlasting memory. Share it on our public wall or keep it private.</p>
         <div class="hero-actions">
           <button id="btn-login-redirect" class="btn-primary">Sign In to Leave an Entry</button>
+        </div>
+      </section>
+
+      <!-- VIEW 1.5: Public Memories Wall -->
+      <section class="panel glass projects-panel animate-fade-in" id="public-feed-panel" style="display: none; margin-top: 32px;">
+        <div class="section-header" style="margin-bottom: 24px;">
+          <div class="section-title-group" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <h2 style="font-size: 1.5rem; font-family: var(--font-heading); color: var(--text-primary);">Wall of Memories</h2>
+            <span class="entry-visibility-badge public" style="text-transform: capitalize; font-size: 0.72rem; padding: 4px 10px;">
+              <span class="visibility-dot"></span>
+              Public Feed
+            </span>
+          </div>
+          <p class="section-subtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">A collection of shared moments from our visitors.</p>
+        </div>
+
+        <div id="public-feed-list" class="public-entries-grid">
+          <!-- Public entries will render here -->
+        </div>
+
+        <!-- Call to Action (Login to make entry) -->
+        <div class="public-feed-cta-banner" style="margin-top: 32px; padding: 20px; border-radius: 12px; border: 1px dashed var(--card-border); background: rgba(255, 255, 255, 0.02); text-align: center;">
+          <p style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 12px;">Want to capture a memory and add your own selfie to this wall?</p>
+          <button id="btn-login-redirect-feed" class="btn-primary" style="padding: 10px 20px; font-size: 0.88rem;">Sign In to Leave an Entry</button>
         </div>
       </section>
 
@@ -371,7 +395,7 @@
           </div>
           <p class="section-subtitle">A secure digital journal crafted to respect visitor data rights.</p>
         </div>
-        <p>Guestbook is a private, visitor-focused digital journal. Your entries, selfies, and moods are kept secure, moderated for safety, and stored exclusively as an archive of your connection with us. In alignment with modern data-rights philosophy, there is no public community wall, all photos are served over secure signed URLs, and visitors hold full deletion control over their entries.</p>
+        <p>Guestbook is a visitor-focused digital journal. Your entries, selfies, and moods are kept secure, moderated for safety, and stored as an archive of your connection with us. In alignment with modern data-rights philosophy, you hold full control to choose if your approved entry is shared publicly or kept private, all photos are served over secure signed URLs, and visitors hold full deletion rights over their entries.</p>
       </section>
     </main>
 

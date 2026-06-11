@@ -7,7 +7,8 @@ import {
   fetchAdminEntries,
   fetchAuditLogs,
   moderateGuestbookEntry,
-  deleteGuestbookEntry
+  deleteGuestbookEntry,
+  fetchPublicEntries
 } from './db/queries';
 
 // Cache limits data to prevent async file dialog issues on mobile devices
@@ -23,18 +24,24 @@ async function showView(viewName: 'welcome' | 'login' | 'dashboard' | 'create-en
   const createEntrySection = document.getElementById('create-entry-panel');
   const adminSection = document.getElementById('admin-panel');
   const aboutProjectSection = document.getElementById('about-project');
+  const publicFeedSection = document.getElementById('public-feed-panel');
 
   if (welcomeSection) welcomeSection.style.display = 'none';
   if (loginSection) loginSection.style.display = 'none';
   if (dashboardSection) dashboardSection.style.display = 'none';
   if (createEntrySection) createEntrySection.style.display = 'none';
   if (adminSection) adminSection.style.display = 'none';
+  if (publicFeedSection) publicFeedSection.style.display = 'none';
   if (aboutProjectSection) {
     aboutProjectSection.style.display = (viewName === 'admin') ? 'none' : 'block';
   }
 
   if (viewName === 'welcome' && welcomeSection) {
     welcomeSection.style.display = 'block';
+    if (publicFeedSection) {
+      publicFeedSection.style.display = 'block';
+      await renderPublicFeed();
+    }
   } else if (viewName === 'login' && loginSection) {
     loginSection.style.display = 'block';
   } else if (viewName === 'dashboard' && dashboardSection) {
@@ -1196,6 +1203,113 @@ function exportAdminEntriesToCSV() {
   document.body.removeChild(link);
 }
 
+/**
+ * Loads and renders public approved entries on the landing welcome page.
+ */
+async function renderPublicFeed() {
+  const feedList = document.getElementById('public-feed-list');
+  const feedContainer = document.getElementById('public-feed-panel');
+  if (!feedList || !feedContainer) return;
+
+  feedList.innerHTML = `
+    <div class="writings-state-container" style="grid-column: 1 / -1;">
+      <div class="loading-spinner"></div>
+      <p style="font-size: 0.88rem; color: var(--text-muted);">Loading memories...</p>
+    </div>
+  `;
+
+  try {
+    const entries = await fetchPublicEntries();
+    feedList.innerHTML = '';
+
+    if (!entries || entries.length === 0) {
+      feedContainer.style.display = 'none';
+      return;
+    }
+
+    feedContainer.style.display = 'block';
+
+    entries.forEach((entry: any) => {
+      const card = createPublicEntryCard(entry);
+      feedList.appendChild(card);
+      if (entry.selfie_url) {
+        loadCardSelfie(card, entry.selfie_url);
+      }
+    });
+
+    // Bind action listeners (like download actions) for dynamically rendered elements
+    bindDashboardActionListeners(feedList);
+
+  } catch (err) {
+    console.error('Failed to load public feed:', err);
+    feedList.innerHTML = `
+      <div class="writings-state-container error" style="grid-column: 1 / -1; padding: 20px;">
+        <svg class="error-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p style="font-size: 0.88rem;">Failed to load memories.</p>
+      </div>
+    `;
+  }
+}
+
+/**
+ * Creates the DOM element for a single public guestbook entry card.
+ */
+function createPublicEntryCard(entry: any): HTMLElement {
+  const card = document.createElement('div');
+  card.className = 'entry-card glass-hover animate-fade-in';
+  
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+  const formattedDate = new Date(entry.created_at).toLocaleDateString(undefined, dateOptions);
+
+  card.innerHTML = `
+    <div class="entry-card-header">
+      <div class="entry-user-info">
+        <span class="entry-name">${escapeHtml(entry.original_name)}</span>
+        <span class="entry-date">${formattedDate}</span>
+      </div>
+    </div>
+    
+    <div class="entry-card-body">
+      ${entry.selfie_url ? `
+        <div class="entry-selfie-frame">
+          <div class="selfie-loader-spinner"></div>
+          <img class="entry-selfie" alt="Selfie Memory" style="display: none;" />
+        </div>
+      ` : ''}
+      <p class="entry-message">"${escapeHtml(entry.message)}"</p>
+    </div>
+    
+    <div class="entry-card-footer">
+      <div class="entry-footer-left">
+        ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : ''}
+      </div>
+      <div class="entry-footer-right">
+        ${entry.status === 'approved' && entry.selfie_url ? `
+          <button class="btn-download btn-text-action" data-path="${entry.selfie_url}" aria-label="Download Photo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download Photo
+          </button>
+        ` : ''}
+      </div>
+    </div>
+  `;
+  return card;
+}
+
 export {
   showView,
   updateNavigation,
@@ -1203,5 +1317,6 @@ export {
   loadAdminDashboard,
   renderAdminAllTab,
   exportAdminEntriesToCSV,
-  cachedLimits
+  cachedLimits,
+  renderPublicFeed
 };
