@@ -602,6 +602,9 @@ document.addEventListener('DOMContentLoaded', () => {
         finalMood = selectedMood;
       }
 
+      const isPublicCheckbox = document.getElementById('checkbox-is-public') as HTMLInputElement;
+      const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : false;
+
       if (!name) {
         alert('Please enter your name.');
         return;
@@ -618,14 +621,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (replacementId) {
-          await replaceGuestbookEntry(replacementId, name, message, finalMood, activeSelfieBlob);
+          await replaceGuestbookEntry(replacementId, name, message, finalMood, isPublic, activeSelfieBlob);
           if (mode === 'edit') {
             alert('Your entry was successfully updated!');
           } else {
             alert('Your replacement entry was successfully submitted and is pending review!');
           }
         } else {
-          await createGuestbookEntry(name, message, finalMood, true, activeSelfieBlob);
+          await createGuestbookEntry(name, message, finalMood, true, isPublic, activeSelfieBlob);
           alert('Your entry was successfully submitted and is pending review!');
         }
         

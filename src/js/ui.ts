@@ -66,6 +66,12 @@ function resetCreateEntryForm() {
   
   form.reset();
 
+  // Reset publicity option checkbox
+  const isPublicCheckbox = document.getElementById('checkbox-is-public') as HTMLInputElement;
+  if (isPublicCheckbox) {
+    isPublicCheckbox.checked = false;
+  }
+
   // Reset replacement-specific form state and headers
   const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
   if (replacementInput) {
@@ -280,9 +286,15 @@ function createEntryCard(entry: any): HTMLElement {
         <span class="entry-name">${escapeHtml(entry.original_name)}</span>
         <span class="entry-date">${formattedDate}</span>
       </div>
-      <div class="entry-status-badge ${statusClass}">
-        <span class="status-dot"></span>
-        <span class="status-text">${statusText}</span>
+      <div class="entry-card-badges" style="display: flex; gap: 8px; align-items: center;">
+        <div class="entry-visibility-badge ${entry.is_public ? 'public' : 'private'}">
+          <span class="visibility-dot"></span>
+          <span class="visibility-text">${entry.is_public ? 'Public' : 'Private'}</span>
+        </div>
+        <div class="entry-status-badge ${statusClass}">
+          <span class="status-dot"></span>
+          <span class="status-text">${statusText}</span>
+        </div>
       </div>
     </div>
     
@@ -433,6 +445,12 @@ function bindDashboardActionListeners(container: HTMLElement) {
         replacementInput.dataset.mode = 'replace';
       }
 
+      // Pre-fill publicity checkbox
+      const isPublicCheckbox = document.getElementById('checkbox-is-public') as HTMLInputElement;
+      if (isPublicCheckbox) {
+        isPublicCheckbox.checked = !!entry.is_public;
+      }
+
       // Pre-fill fields
       const nameInput = document.getElementById('input-entry-name') as HTMLInputElement;
       if (nameInput) nameInput.value = entry.original_name || '';
@@ -530,6 +548,12 @@ function bindDashboardActionListeners(container: HTMLElement) {
       if (replacementInput) {
         replacementInput.value = entry.id;
         replacementInput.dataset.mode = 'edit';
+      }
+
+      // Pre-fill publicity checkbox
+      const isPublicCheckbox = document.getElementById('checkbox-is-public') as HTMLInputElement;
+      if (isPublicCheckbox) {
+        isPublicCheckbox.checked = !!entry.is_public;
       }
 
       // Pre-fill fields
@@ -853,9 +877,15 @@ function createAdminModerationCard(entry: any): HTMLElement {
         <span class="entry-name">${escapeHtml(entry.original_name)}</span>
         <span class="entry-date">${formattedDate}</span>
       </div>
-      <div class="entry-status-badge pending">
-        <span class="status-dot"></span>
-        <span class="status-text">Pending</span>
+      <div class="entry-card-badges" style="display: flex; gap: 8px; align-items: center;">
+        <div class="entry-visibility-badge ${entry.is_public ? 'public' : 'private'}">
+          <span class="visibility-dot"></span>
+          <span class="visibility-text">${entry.is_public ? 'Public' : 'Private'}</span>
+        </div>
+        <div class="entry-status-badge pending">
+          <span class="status-dot"></span>
+          <span class="status-text">Pending</span>
+        </div>
       </div>
     </div>
     
@@ -943,9 +973,15 @@ function createAdminAllCard(entry: any): HTMLElement {
         <span class="entry-name">${escapeHtml(entry.original_name)}</span>
         <span class="entry-date">${formattedDate}</span>
       </div>
-      <div class="entry-status-badge ${statusClass}">
-        <span class="status-dot"></span>
-        <span class="status-text">${statusText}</span>
+      <div class="entry-card-badges" style="display: flex; gap: 8px; align-items: center;">
+        <div class="entry-visibility-badge ${entry.is_public ? 'public' : 'private'}">
+          <span class="visibility-dot"></span>
+          <span class="visibility-text">${entry.is_public ? 'Public' : 'Private'}</span>
+        </div>
+        <div class="entry-status-badge ${statusClass}">
+          <span class="status-dot"></span>
+          <span class="status-text">${statusText}</span>
+        </div>
       </div>
     </div>
     

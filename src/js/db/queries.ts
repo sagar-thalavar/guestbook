@@ -79,6 +79,7 @@ async function createGuestbookEntry(
   message: string, 
   mood: string | null, 
   consentGiven: boolean,
+  isPublic: boolean,
   selfieBlob: Blob | null = null
 ) {
   if (!supabase) {
@@ -101,6 +102,7 @@ async function createGuestbookEntry(
         message,
         mood,
         consent_given: consentGiven,
+        is_public: isPublic,
         status: 'pending' // always created as pending review
       }
     ])
@@ -322,6 +324,7 @@ async function replaceGuestbookEntry(
   name: string,
   message: string,
   mood: string | null,
+  isPublic: boolean,
   selfieBlob: Blob | null = null
 ) {
   if (!supabase) {
@@ -366,6 +369,7 @@ async function replaceGuestbookEntry(
     message,
     mood,
     status: 'pending', // always reset status to pending review
+    is_public: isPublic,
     reupload_attempts: nextAttempts
   };
 

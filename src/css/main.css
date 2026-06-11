@@ -808,6 +808,46 @@ select option {
   100% { opacity: 0.4; }
 }
 
+/* Custom Visibility Badges (Public / Private) */
+.entry-visibility-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.entry-visibility-badge .visibility-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.entry-visibility-badge.public {
+  background: rgba(79, 70, 229, 0.1);
+  color: #818cf8;
+  border: 1px solid rgba(79, 70, 229, 0.25);
+}
+
+.entry-visibility-badge.public .visibility-dot {
+  background: #818cf8;
+}
+
+.entry-visibility-badge.private {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  border: 1px solid var(--card-border);
+}
+
+.entry-visibility-badge.private .visibility-dot {
+  background: var(--text-muted);
+}
+
+
 .entry-card-body {
   display: flex;
   flex-direction: column;
