@@ -177,14 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnBackHome = document.getElementById('btn-back-home');
   if (btnBackHome) {
     btnBackHome.addEventListener('click', (e) => {
-      e.preventDefault();
       const welcomeSection = document.getElementById('hero-welcome');
       const isWelcomeActive = welcomeSection && welcomeSection.style.display !== 'none';
       const dashboardSection = document.getElementById('dashboard-panel');
       const isDashboardActive = dashboardSection && dashboardSection.style.display !== 'none';
       if (isWelcomeActive || isDashboardActive) {
-        window.history.back();
+        // Let it naturally navigate to https://sagarthalavar.in (default link behavior)
       } else {
+        e.preventDefault();
         goBack(currentUser);
       }
     });
@@ -266,6 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 5. Dashboard Navigation triggers
   const btnCreateEntryTrigger = document.getElementById('btn-create-entry-trigger');
   const btnCancelEntry = document.getElementById('btn-cancel-entry');
+  const btnDashboardViewArchive = document.getElementById('btn-dashboard-view-archive');
 
   if (btnCreateEntryTrigger) {
     btnCreateEntryTrigger.addEventListener('click', () => {
@@ -278,6 +279,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCancelEntry.addEventListener('click', () => {
       resetCameraUI();
       showView('dashboard', currentUser);
+    });
+  }
+
+  if (btnDashboardViewArchive) {
+    btnDashboardViewArchive.addEventListener('click', () => {
+      showView('archive', currentUser);
     });
   }
 
@@ -688,17 +695,33 @@ document.addEventListener('DOMContentLoaded', () => {
   if (hasValidConfig) {
     onAuthChange(async (event, session) => {
       console.log(`Auth state change triggered: ${event}`);
-      currentUser = session?.user || null;
+      const newUser = session?.user || null;
       
-      resetCameraUI();
+      // Determine if the login state actually transitioned (logged out <-> logged in)
+      const loginStateChanged = (currentUser === null && newUser !== null) || (currentUser !== null && newUser === null);
       
-      if (currentUser) {
-        const isAdmin = await isCurrentUserAdmin();
-        updateNavigation(currentUser, isAdmin);
-        showView('dashboard', currentUser);
+      currentUser = newUser;
+      
+      if (loginStateChanged) {
+        resetCameraUI();
+        
+        if (currentUser) {
+          const isAdmin = await isCurrentUserAdmin();
+          updateNavigation(currentUser, isAdmin);
+          showView('dashboard', currentUser);
+        } else {
+          updateNavigation(null, false);
+          showView('welcome');
+        }
       } else {
-        updateNavigation(null, false);
-        showView('welcome');
+        // If user session details were refreshed in the background but state did not change,
+        // just update the navigation/profile UI and do NOT reset their form view or camera!
+        if (currentUser) {
+          const isAdmin = await isCurrentUserAdmin();
+          updateNavigation(currentUser, isAdmin);
+        } else {
+          updateNavigation(null, false);
+        }
       }
     });
   } else {

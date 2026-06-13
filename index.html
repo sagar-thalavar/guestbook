@@ -23,7 +23,7 @@
     <!-- Top Header -->
     <header class="top-header">
       <div class="logo-container">
-        <a href="#" id="btn-back-home" class="btn-back-home" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 9999px; color: var(--text-primary, #fff); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: background 0.2s ease;">
+        <a href="https://sagarthalavar.in" id="btn-back-home" class="btn-back-home" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 9999px; color: var(--text-primary, #fff); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: background 0.2s ease;">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           Back
         </a>
@@ -46,6 +46,7 @@
           </button>
           <div class="dropdown-menu glass" id="dropdown-menu-content">
             <button id="btn-nav-admin" class="dropdown-item" style="display: none;">Admin Panel</button>
+            <button id="btn-nav-archive" class="dropdown-item">View Wall of Memories</button>
             <button id="btn-nav-signout" class="dropdown-item">Sign Out</button>
             <div class="dropdown-divider"></div>
             <button id="btn-delete-account" class="dropdown-item danger">Delete Account</button>
@@ -169,7 +170,10 @@
               <h3>Record a Visit</h3>
               <p>Leave a personal memory of your visit with a selfie, custom mood, and message.</p>
             </div>
-            <button id="btn-create-entry-trigger" class="btn-primary">Create Guestbook Entry</button>
+            <div class="action-card-buttons" style="display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; min-width: 220px;">
+              <button id="btn-create-entry-trigger" class="btn-primary" style="width: 100%;">Create Guestbook Entry</button>
+              <button id="btn-dashboard-view-archive" class="btn-secondary" style="width: 100%;">View Wall of Memories</button>
+            </div>
           </div>
 
           <!-- History Grid Slot -->
