@@ -867,6 +867,13 @@ select option {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: border-color var(--transition-normal), transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.entry-selfie-frame:hover {
+  border-color: var(--text-muted);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 [data-theme='dark'] .entry-selfie-frame {
@@ -986,6 +993,32 @@ select option {
   background: var(--danger);
   color: #fff;
   border-color: var(--danger);
+}
+
+/* Collapsible details container */
+.entry-details-collapsed {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid transparent;
+  padding-top: 0;
+  margin-top: 0;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.25s ease-out,
+              margin-top 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              padding-top 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s ease;
+}
+
+.entry-details-collapsed.expanded {
+  max-height: 800px; /* large enough to contain message, mood tag, rejection box, and actions */
+  opacity: 1;
+  border-top-color: var(--card-border);
+  padding-top: 14px;
+  margin-top: 14px;
 }
 
 /* Loading/spinner states */

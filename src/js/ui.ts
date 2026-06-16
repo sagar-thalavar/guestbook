@@ -233,10 +233,18 @@ async function loadUserDashboard() {
         loadCardSelfie(card, entry.selfie_url);
       }
 
-      // Add click handler to open the detailed modal
-      card.addEventListener('click', () => {
-        openMemoryDetailModal(entry, true);
-      });
+      // Toggle collapsible details inline when the photo frame is clicked
+      const selfieFrame = card.querySelector('.entry-selfie-frame');
+      const detailsContainer = card.querySelector('.entry-details-collapsed') as HTMLElement;
+      if (selfieFrame && detailsContainer) {
+        selfieFrame.addEventListener('click', (e) => {
+          e.stopPropagation();
+          detailsContainer.classList.toggle('expanded');
+        });
+      }
+
+      // Bind actions for this specific card
+      bindCardActionListeners(card, entry);
     }
 
   } catch (error: any) {
@@ -278,12 +286,100 @@ function updateDashboardLimitsUI(limits: { dailyCount: number; weeklyCount: numb
 }
 
 /**
+ * Binds event listeners for individual card actions (download, replace, edit, delete).
+ */
+function bindCardActionListeners(card: HTMLElement, entry: any) {
+  // 1. Download Photo
+  const downloadBtn = card.querySelector('.btn-download') as HTMLButtonElement;
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const filePath = downloadBtn.getAttribute('data-path');
+      if (!filePath) return;
+
+      try {
+        downloadBtn.disabled = true;
+        const signedUrl = await getSignedSelfieUrl(filePath);
+        if (signedUrl) {
+          try {
+            const response = await fetch(signedUrl);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const filename = filePath.split('/').pop() || 'selfie.jpg';
+            
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+          } catch (fetchErr) {
+            console.error('Fetch download failed, falling back to tab:', fetchErr);
+            window.open(signedUrl, '_blank');
+          }
+        } else {
+          alert('Could not download image.');
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        downloadBtn.disabled = false;
+      }
+    });
+  }
+
+  // 2. Replace Action
+  const replaceBtn = card.querySelector('.btn-replace') as HTMLButtonElement;
+  if (replaceBtn) {
+    replaceBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      triggerReplaceAction(entry);
+    });
+  }
+
+  // 3. Edit Action
+  const editBtn = card.querySelector('.btn-edit') as HTMLButtonElement;
+  if (editBtn) {
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      triggerEditAction(entry);
+    });
+  }
+
+  // 4. Delete Action
+  const deleteBtn = card.querySelector('.btn-delete-individual') as HTMLButtonElement;
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const confirmed = await showConfirm(
+        'Are you sure you want to delete this guestbook entry permanently? This action is irreversible.',
+        'Delete Entry'
+      );
+      if (!confirmed) return;
+
+      try {
+        deleteBtn.disabled = true;
+        deleteBtn.textContent = 'Deleting...';
+        await deleteGuestbookEntry(entry.id, entry.selfie_url);
+        alert('Entry deleted successfully.');
+        await loadUserDashboard();
+      } catch (err: any) {
+        console.error(err);
+        alert(`Failed to delete entry: ${err.message || 'Database error'}`);
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = 'Delete Entry';
+      }
+    });
+  }
+}
+
+/**
  * Creates the DOM element for a single guestbook entry card.
  */
 function createEntryCard(entry: any): HTMLElement {
   const card = document.createElement('div');
   card.className = 'entry-card glass-hover animate-fade-in';
-  card.style.cursor = 'pointer';
   
   // Format Date (matching portfolio style)
   const dateOptions: Intl.DateTimeFormatOptions = {
@@ -295,6 +391,33 @@ function createEntryCard(entry: any): HTMLElement {
   };
   const formattedDate = new Date(entry.created_at).toLocaleDateString(undefined, dateOptions);
 
+  // Status mapping
+  let statusText = 'Pending Review';
+  let statusClass = 'pending';
+  let statusDescription = '';
+
+  if (entry.status === 'approved') {
+    statusText = 'Approved';
+    statusClass = 'approved';
+  } else if (entry.status === 'rejected') {
+    statusText = 'Rejected';
+    statusClass = 'rejected';
+    
+    // Map human-readable rejection reasons
+    const reasonMap: Record<string, string> = {
+      unclear_photo: 'Unclear Photo',
+      inappropriate_content: 'Inappropriate Content',
+      image_not_visitor: 'Image does not show visitor',
+      duplicate_submission: 'Duplicate Submission',
+      spam_submission: 'Spam/Abuse Submission',
+      other: 'Other'
+    };
+    
+    const friendlyReason = reasonMap[entry.rejection_reason] || 'Moderator Decision';
+    const customDetail = entry.custom_rejection_reason ? `: ${entry.custom_rejection_reason}` : '';
+    statusDescription = `<p class="rejection-reason-box" style="margin-top: 4px;">Reason: <strong>${friendlyReason}${customDetail}</strong></p>`;
+  }
+
   card.innerHTML = `
     <div class="entry-card-header">
       <div class="entry-user-info">
@@ -305,12 +428,12 @@ function createEntryCard(entry: any): HTMLElement {
     
     <div class="entry-card-body" style="flex-grow: 1;">
       ${entry.selfie_url ? `
-        <div class="entry-selfie-frame">
+        <div class="entry-selfie-frame" style="cursor: pointer;" title="Click to show/hide details">
           <div class="selfie-loader-spinner"></div>
           <img class="entry-selfie" alt="Selfie Memory" style="display: none;" />
         </div>
       ` : `
-        <div class="entry-selfie-frame" style="display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.02); min-height: 120px;">
+        <div class="entry-selfie-frame" style="cursor: pointer; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.02); min-height: 120px;" title="Click to show/hide details">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3;">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -318,6 +441,54 @@ function createEntryCard(entry: any): HTMLElement {
           <span style="font-size: 0.82rem; opacity: 0.4; margin-left: 8px;">Text memory</span>
         </div>
       `}
+
+      <!-- Collapsible details section, hidden by default -->
+      <div class="entry-details-collapsed">
+        <div class="entry-card-badges" style="display: flex; gap: 8px; align-items: center;">
+          <div class="entry-visibility-badge ${entry.is_public ? 'public' : 'private'}">
+            <span class="visibility-dot"></span>
+            <span class="visibility-text">${entry.is_public ? 'Public' : 'Private'}</span>
+          </div>
+          <div class="entry-status-badge ${statusClass}">
+            <span class="status-dot"></span>
+            <span class="status-text">${statusText}</span>
+          </div>
+        </div>
+
+        <p class="entry-message">"${escapeHtml(entry.message)}"</p>
+        ${statusDescription}
+
+        <div class="entry-card-footer" style="margin-top: 0; padding-top: 0; border-top: none; justify-content: space-between; align-items: center; display: flex;">
+          <div class="entry-footer-left">
+            ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : ''}
+          </div>
+          <div class="entry-footer-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            ${entry.status === 'approved' && entry.selfie_url ? `
+              <button class="btn-download btn-text-action" data-path="${entry.selfie_url}" aria-label="Download Photo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download Photo
+              </button>
+            ` : ''}
+            ${entry.status === 'rejected' && entry.reupload_attempts < 3 ? `
+              <button class="btn-replace btn-action-pill" data-id="${entry.id}">
+                Replace Submission (${entry.reupload_attempts}/3)
+              </button>
+            ` : ''}
+            ${entry.status === 'pending' ? `
+              <button class="btn-edit btn-action-pill" data-id="${entry.id}">
+                Edit Details
+              </button>
+            ` : ''}
+            <button class="btn-delete-individual btn-action-pill danger" data-id="${entry.id}">
+              Delete Entry
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -1146,10 +1317,18 @@ async function renderPublicFeed() {
         loadCardSelfie(card, entry.selfie_url);
       }
 
-      // Open detail modal when clicking anywhere on the card
-      card.addEventListener('click', () => {
-        openMemoryDetailModal(entry, false);
-      });
+      // Toggle collapsible details inline when the photo frame is clicked
+      const selfieFrame = card.querySelector('.entry-selfie-frame');
+      const detailsContainer = card.querySelector('.entry-details-collapsed') as HTMLElement;
+      if (selfieFrame && detailsContainer) {
+        selfieFrame.addEventListener('click', (e) => {
+          e.stopPropagation();
+          detailsContainer.classList.toggle('expanded');
+        });
+      }
+
+      // Bind actions for this specific card (e.g., download button)
+      bindCardActionListeners(card, entry);
     });
 
   } catch (err) {
@@ -1167,291 +1346,7 @@ async function renderPublicFeed() {
   }
 }
 
-/**
- * Opens the memory detail modal for public entries.
- */
-/**
- * Opens the memory detail modal for both dashboard and public entries.
- */
-async function openMemoryDetailModal(entry: any, isDashboardContext: boolean = false) {
-  const modal = document.getElementById('memory-detail-modal');
-  const modalImg = document.getElementById('memory-modal-image') as HTMLImageElement;
-  const modalSpinner = document.getElementById('memory-modal-spinner');
-  const modalName = document.getElementById('memory-modal-name');
-  const modalDate = document.getElementById('memory-modal-date');
-  const modalMood = document.getElementById('memory-modal-mood');
-  const modalMessage = document.getElementById('memory-modal-message');
-  const modalBadges = document.getElementById('memory-modal-badges');
-  const modalRejectionBox = document.getElementById('memory-modal-rejection-box');
-  const modalActions = document.getElementById('memory-modal-actions');
 
-  if (!modal) return;
-
-  const dateOptions: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  };
-  const formattedDate = new Date(entry.created_at).toLocaleDateString(undefined, dateOptions);
-
-  if (modalName) modalName.textContent = entry.original_name;
-  if (modalDate) modalDate.textContent = formattedDate;
-  if (modalMessage) modalMessage.textContent = `"${entry.message}"`;
-
-  // Mood tag
-  if (modalMood) {
-    if (entry.mood) {
-      modalMood.textContent = entry.mood;
-      modalMood.style.display = 'inline-block';
-    } else {
-      modalMood.style.display = 'none';
-    }
-  }
-
-  // Dashboard status / visibility badges
-  if (modalBadges) {
-    if (isDashboardContext) {
-      let statusText = 'Pending Review';
-      let statusClass = 'pending';
-      if (entry.status === 'approved') {
-        statusText = 'Approved';
-        statusClass = 'approved';
-      } else if (entry.status === 'rejected') {
-        statusText = 'Rejected';
-        statusClass = 'rejected';
-      }
-
-      const visibilityText = entry.is_public ? 'Public' : 'Private';
-      const visibilityClass = entry.is_public ? 'public' : 'private';
-
-      modalBadges.innerHTML = `
-        <div class="entry-visibility-badge ${visibilityClass}" style="padding: 2px 8px; font-size: 0.68rem;">
-          <span class="visibility-dot"></span>
-          <span class="visibility-text">${visibilityText}</span>
-        </div>
-        <div class="entry-status-badge ${statusClass}" style="padding: 2px 8px; font-size: 0.68rem;">
-          <span class="status-dot"></span>
-          <span class="status-text">${statusText}</span>
-        </div>
-      `;
-      modalBadges.style.display = 'flex';
-    } else {
-      modalBadges.style.display = 'none';
-    }
-  }
-
-  // Dashboard rejection reason box
-  if (modalRejectionBox) {
-    if (isDashboardContext && entry.status === 'rejected') {
-      const reasonMap: Record<string, string> = {
-        unclear_photo: 'Unclear Photo',
-        inappropriate_content: 'Inappropriate Content',
-        image_not_visitor: 'Image does not show visitor',
-        duplicate_submission: 'Duplicate Submission',
-        spam_submission: 'Spam/Abuse Submission',
-        other: 'Other'
-      };
-      const friendlyReason = reasonMap[entry.rejection_reason] || 'Moderator Decision';
-      const customDetail = entry.custom_rejection_reason ? `: ${entry.custom_rejection_reason}` : '';
-      
-      modalRejectionBox.innerHTML = `
-        <div class="rejection-reason-box" style="margin: 0; font-size: 0.82rem;">
-          Reason: <strong>${friendlyReason}${customDetail}</strong>
-        </div>
-      `;
-      modalRejectionBox.style.display = 'block';
-    } else {
-      modalRejectionBox.style.display = 'none';
-    }
-  }
-
-  // Setup dynamic actions / buttons
-  if (modalActions) {
-    modalActions.innerHTML = '';
-
-    if (isDashboardContext) {
-      // 1. Download Photo button
-      if (entry.status === 'approved' && entry.selfie_url) {
-        const downloadBtn = document.createElement('button');
-        downloadBtn.className = 'btn-download btn-text-action';
-        downloadBtn.style.padding = '8px 16px';
-        downloadBtn.style.fontSize = '0.82rem';
-        downloadBtn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Download Photo
-        `;
-        downloadBtn.onclick = async (e) => {
-          e.stopPropagation();
-          try {
-            downloadBtn.disabled = true;
-            const signedUrl = await getSignedSelfieUrl(entry.selfie_url);
-            if (signedUrl) {
-              try {
-                const response = await fetch(signedUrl);
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
-                const filename = entry.selfie_url.split('/').pop() || 'selfie.jpg';
-                
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(blobUrl);
-              } catch (fetchErr) {
-                console.error('Fetch download failed, falling back to tab:', fetchErr);
-                window.open(signedUrl, '_blank');
-              }
-            } else {
-              alert('Could not download image.');
-            }
-          } catch (err) {
-            console.error(err);
-          } finally {
-            downloadBtn.disabled = false;
-          }
-        };
-        modalActions.appendChild(downloadBtn);
-      }
-
-      // 2. Replace Submission button
-      if (entry.status === 'rejected' && entry.reupload_attempts < 3) {
-        const replaceBtn = document.createElement('button');
-        replaceBtn.className = 'btn-replace btn-action-pill';
-        replaceBtn.textContent = `Replace Submission (${entry.reupload_attempts}/3)`;
-        replaceBtn.onclick = () => {
-          modal.style.display = 'none';
-          triggerReplaceAction(entry);
-        };
-        modalActions.appendChild(replaceBtn);
-      }
-
-      // 3. Edit Details button
-      if (entry.status === 'pending') {
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn-edit btn-action-pill';
-        editBtn.textContent = 'Edit Details';
-        editBtn.onclick = () => {
-          modal.style.display = 'none';
-          triggerEditAction(entry);
-        };
-        modalActions.appendChild(editBtn);
-      }
-
-      // 4. Delete Entry button (red action pill)
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'btn-delete-individual btn-action-pill danger';
-      deleteBtn.textContent = 'Delete Entry';
-      deleteBtn.onclick = async () => {
-        const confirmed = await showConfirm(
-          'Are you sure you want to delete this guestbook entry permanently? This action is irreversible.',
-          'Delete Entry'
-        );
-        if (!confirmed) return;
-
-        try {
-          deleteBtn.disabled = true;
-          deleteBtn.textContent = 'Deleting...';
-          await deleteGuestbookEntry(entry.id, entry.selfie_url);
-          modal.style.display = 'none';
-          alert('Entry deleted successfully.');
-          await loadUserDashboard();
-        } catch (err: any) {
-          console.error(err);
-          alert(`Failed to delete entry: ${err.message || 'Database error'}`);
-          deleteBtn.disabled = false;
-          deleteBtn.textContent = 'Delete Entry';
-        }
-      };
-      modalActions.appendChild(deleteBtn);
-
-    } else {
-      // Public view context: only show download if approved and selfie exists
-      if (entry.status === 'approved' && entry.selfie_url) {
-        const downloadBtn = document.createElement('button');
-        downloadBtn.className = 'btn-download btn-text-action';
-        downloadBtn.style.padding = '8px 16px';
-        downloadBtn.style.fontSize = '0.82rem';
-        downloadBtn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Download Photo
-        `;
-        downloadBtn.onclick = async (e) => {
-          e.stopPropagation();
-          try {
-            downloadBtn.disabled = true;
-            const signedUrl = await getSignedSelfieUrl(entry.selfie_url);
-            if (signedUrl) {
-              try {
-                const response = await fetch(signedUrl);
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
-                const filename = entry.selfie_url.split('/').pop() || 'selfie.jpg';
-                
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(blobUrl);
-              } catch (fetchErr) {
-                console.error('Fetch download failed, falling back to tab:', fetchErr);
-                window.open(signedUrl, '_blank');
-              }
-            } else {
-              alert('Could not download image.');
-            }
-          } catch (err) {
-            console.error(err);
-          } finally {
-            downloadBtn.disabled = false;
-          }
-        };
-        modalActions.appendChild(downloadBtn);
-      }
-    }
-  }
-
-  // Handle image loading
-  if (modalImg && modalSpinner) {
-    modalImg.style.display = 'none';
-    if (entry.selfie_url) {
-      modalSpinner.style.display = 'block';
-      try {
-        const signedUrl = await getSignedSelfieUrl(entry.selfie_url);
-        if (signedUrl) {
-          modalImg.src = signedUrl;
-          modalImg.onload = () => {
-            modalSpinner.style.display = 'none';
-            modalImg.style.display = 'block';
-          };
-        } else {
-          modalSpinner.style.display = 'none';
-        }
-      } catch (err) {
-        console.error('Failed to load signed URL in modal:', err);
-        modalSpinner.style.display = 'none';
-      }
-    } else {
-      modalSpinner.style.display = 'none';
-      modalImg.src = '';
-    }
-  }
-
-  modal.style.display = 'flex';
-}
 
 /**
  * Creates the DOM element for a single public guestbook entry card.
@@ -1459,7 +1354,6 @@ async function openMemoryDetailModal(entry: any, isDashboardContext: boolean = f
 function createPublicEntryCard(entry: any): HTMLElement {
   const card = document.createElement('div');
   card.className = 'entry-card glass-hover animate-fade-in';
-  card.style.cursor = 'pointer';
   
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
@@ -1480,12 +1374,12 @@ function createPublicEntryCard(entry: any): HTMLElement {
     
     <div class="entry-card-body" style="flex-grow: 1;">
       ${entry.selfie_url ? `
-        <div class="entry-selfie-frame">
+        <div class="entry-selfie-frame" style="cursor: pointer;" title="Click to show/hide details">
           <div class="selfie-loader-spinner"></div>
           <img class="entry-selfie" alt="Selfie Memory" style="display: none;" />
         </div>
       ` : `
-        <div class="entry-selfie-frame" style="display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.02); min-height: 120px;">
+        <div class="entry-selfie-frame" style="cursor: pointer; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.02); min-height: 120px;" title="Click to show/hide details">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3;">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -1493,6 +1387,29 @@ function createPublicEntryCard(entry: any): HTMLElement {
           <span style="font-size: 0.82rem; opacity: 0.4; margin-left: 8px;">Text memory</span>
         </div>
       `}
+
+      <!-- Collapsible details section, hidden by default -->
+      <div class="entry-details-collapsed">
+        <p class="entry-message">"${escapeHtml(entry.message)}"</p>
+        
+        <div class="entry-card-footer" style="margin-top: 0; padding-top: 0; border-top: none; justify-content: space-between; align-items: center; display: flex;">
+          <div class="entry-footer-left">
+            ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : ''}
+          </div>
+          <div class="entry-footer-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            ${entry.status === 'approved' && entry.selfie_url ? `
+              <button class="btn-download btn-text-action" data-path="${entry.selfie_url}" aria-label="Download Photo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download Photo
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
     </div>
   `;
   return card;
