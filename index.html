@@ -430,12 +430,17 @@
             <h3 id="memory-modal-name" style="font-size: 1.25rem; font-family: var(--font-heading); color: var(--text-primary); margin: 0;"></h3>
             <span id="memory-modal-date" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; display: block;"></span>
           </div>
-          <span id="memory-modal-mood" class="tag-pill"></span>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+            <span id="memory-modal-mood" class="tag-pill"></span>
+            <div id="memory-modal-badges" style="display: flex; gap: 6px;"></div>
+          </div>
         </div>
         
         <p id="memory-modal-message" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-secondary); margin: 0; font-style: italic;"></p>
         
-        <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+        <div id="memory-modal-rejection-box" style="display: none;"></div>
+        
+        <div id="memory-modal-actions" style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; margin-top: 8px; border-top: 1px solid var(--card-border); padding-top: 16px; width: 100%;">
           <button id="memory-modal-download-btn" class="btn-primary" style="padding: 8px 16px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

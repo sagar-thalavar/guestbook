@@ -232,10 +232,12 @@ async function loadUserDashboard() {
       if (entry.selfie_url) {
         loadCardSelfie(card, entry.selfie_url);
       }
-    }
 
-    // Bind event listeners on dynamically rendered elements
-    bindDashboardActionListeners(entriesListContainer);
+      // Add click handler to open the detailed modal
+      card.addEventListener('click', () => {
+        openMemoryDetailModal(entry, true);
+      });
+    }
 
   } catch (error: any) {
     console.error('Error rendering dashboard:', error);
@@ -281,6 +283,7 @@ function updateDashboardLimitsUI(limits: { dailyCount: number; weeklyCount: numb
 function createEntryCard(entry: any): HTMLElement {
   const card = document.createElement('div');
   card.className = 'entry-card glass-hover animate-fade-in';
+  card.style.cursor = 'pointer';
   
   // Format Date (matching portfolio style)
   const dateOptions: Intl.DateTimeFormatOptions = {
@@ -292,91 +295,29 @@ function createEntryCard(entry: any): HTMLElement {
   };
   const formattedDate = new Date(entry.created_at).toLocaleDateString(undefined, dateOptions);
 
-  // Status mapping
-  let statusText = 'Pending Review';
-  let statusClass = 'pending';
-  let statusDescription = '';
-
-  if (entry.status === 'approved') {
-    statusText = 'Approved';
-    statusClass = 'approved';
-  } else if (entry.status === 'rejected') {
-    statusText = 'Rejected';
-    statusClass = 'rejected';
-    
-    // Map human-readable rejection reasons
-    const reasonMap: Record<string, string> = {
-      unclear_photo: 'Unclear Photo',
-      inappropriate_content: 'Inappropriate Content',
-      image_not_visitor: 'Image does not show visitor',
-      duplicate_submission: 'Duplicate Submission',
-      spam_submission: 'Spam/Abuse Submission',
-      other: 'Other'
-    };
-    
-    const friendlyReason = reasonMap[entry.rejection_reason] || 'Moderator Decision';
-    const customDetail = entry.custom_rejection_reason ? `: ${entry.custom_rejection_reason}` : '';
-    statusDescription = `<p class="rejection-reason-box">Reason: <strong>${friendlyReason}${customDetail}</strong></p>`;
-  }
-
   card.innerHTML = `
     <div class="entry-card-header">
       <div class="entry-user-info">
         <span class="entry-name">${escapeHtml(entry.original_name)}</span>
         <span class="entry-date">${formattedDate}</span>
       </div>
-      <div class="entry-card-badges" style="display: flex; gap: 8px; align-items: center;">
-        <div class="entry-visibility-badge ${entry.is_public ? 'public' : 'private'}">
-          <span class="visibility-dot"></span>
-          <span class="visibility-text">${entry.is_public ? 'Public' : 'Private'}</span>
-        </div>
-        <div class="entry-status-badge ${statusClass}">
-          <span class="status-dot"></span>
-          <span class="status-text">${statusText}</span>
-        </div>
-      </div>
     </div>
     
-    <div class="entry-card-body">
+    <div class="entry-card-body" style="flex-grow: 1;">
       ${entry.selfie_url ? `
         <div class="entry-selfie-frame">
           <div class="selfie-loader-spinner"></div>
           <img class="entry-selfie" alt="Selfie Memory" style="display: none;" />
         </div>
-      ` : ''}
-      <p class="entry-message">"${escapeHtml(entry.message)}"</p>
-      ${statusDescription}
-    </div>
-    
-    <div class="entry-card-footer">
-      <div class="entry-footer-left">
-        ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : ''}
-      </div>
-      <div class="entry-footer-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-        ${entry.status === 'approved' && entry.selfie_url ? `
-          <button class="btn-download btn-text-action" data-path="${entry.selfie_url}" aria-label="Download Photo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Download Photo
-          </button>
-        ` : ''}
-        ${entry.status === 'rejected' && entry.reupload_attempts < 3 ? `
-          <button class="btn-replace btn-action-pill" data-id="${entry.id}">
-            Replace Submission (${entry.reupload_attempts}/3)
-          </button>
-        ` : ''}
-        ${entry.status === 'pending' ? `
-          <button class="btn-edit btn-action-pill" data-id="${entry.id}">
-            Edit Details
-          </button>
-        ` : ''}
-        <button class="btn-delete-individual btn-action-pill danger" data-id="${entry.id}">
-          Delete Entry
-        </button>
-      </div>
+      ` : `
+        <div class="entry-selfie-frame" style="display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.02); min-height: 120px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3;">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span style="font-size: 0.82rem; opacity: 0.4; margin-left: 8px;">Text memory</span>
+        </div>
+      `}
     </div>
   `;
 
@@ -418,294 +359,196 @@ async function loadCardSelfie(card: HTMLElement, selfieUrl: string) {
 /**
  * Binds click action event listeners for dynamically added buttons.
  */
-function bindDashboardActionListeners(container: HTMLElement) {
-  // 1. Download Actions
-  const downloadButtons = container.querySelectorAll('.btn-download');
-  downloadButtons.forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const button = e.currentTarget as HTMLButtonElement;
-      const filePath = button.getAttribute('data-path');
-      if (!filePath) return;
+/**
+ * Triggers the replacement flow for a rejected entry.
+ */
+function triggerReplaceAction(entry: any) {
+  // Check reupload attempts constraint
+  if (entry.reupload_attempts >= 3) {
+    alert('Maximum replacement attempts exceeded. You cannot replace this entry anymore.');
+    return;
+  }
 
-      try {
-        button.disabled = true;
-        const signedUrl = await getSignedSelfieUrl(filePath);
-        if (signedUrl) {
-          try {
-            const response = await fetch(signedUrl);
-            const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            const filename = filePath.split('/').pop() || 'selfie.jpg';
-            
-            const link = document.createElement('a');
-            link.href = blobUrl;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(blobUrl);
-          } catch (fetchErr) {
-            console.error('Fetch download failed, falling back to tab:', fetchErr);
-            window.open(signedUrl, '_blank');
-          }
-        } else {
-          alert('Could not download image.');
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        button.disabled = false;
-      }
-    });
-  });
+  // Set the hidden input value to mark this form as a replacement request
+  const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
+  if (replacementInput) {
+    replacementInput.value = entry.id;
+    replacementInput.dataset.mode = 'replace';
+  }
 
-  // 2. Replace Actions
-  const replaceButtons = container.querySelectorAll('.btn-replace');
-  replaceButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const button = e.currentTarget as HTMLButtonElement;
-      const entryId = button.getAttribute('data-id');
-      if (!entryId) return;
+  // Pre-fill publicity checkbox
+  const isPublicCheckbox = document.getElementById('checkbox-is-public') as HTMLInputElement;
+  if (isPublicCheckbox) {
+    isPublicCheckbox.checked = !!entry.is_public;
+  }
 
-      // Find the existing rejected entry in userEntries
-      const entry = userEntries.find(ent => ent.id === entryId);
-      if (!entry) {
-        alert('Could not find entry records.');
-        return;
-      }
+  // Pre-fill fields
+  const nameInput = document.getElementById('input-entry-name') as HTMLInputElement;
+  if (nameInput) nameInput.value = entry.original_name || '';
 
-      // Check reupload attempts constraint
-      if (entry.reupload_attempts >= 3) {
-        alert('Maximum replacement attempts exceeded. You cannot replace this entry anymore.');
-        return;
-      }
-
-      // Set the hidden input value to mark this form as a replacement request
-      const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
-      if (replacementInput) {
-        replacementInput.value = entry.id;
-        replacementInput.dataset.mode = 'replace';
-      }
-
-      // Pre-fill publicity checkbox
-      const isPublicCheckbox = document.getElementById('checkbox-is-public') as HTMLInputElement;
-      if (isPublicCheckbox) {
-        isPublicCheckbox.checked = !!entry.is_public;
-      }
-
-      // Pre-fill fields
-      const nameInput = document.getElementById('input-entry-name') as HTMLInputElement;
-      if (nameInput) nameInput.value = entry.original_name || '';
-
-      const messageInput = document.getElementById('input-entry-message') as HTMLTextAreaElement;
-      if (messageInput) {
-        messageInput.value = entry.message || '';
-        
-        // Trigger character counter state update
-        const charCounter = document.getElementById('char-counter');
-        if (charCounter) {
-          const len = messageInput.value.length;
-          charCounter.textContent = `${len} / 200`;
-          if (len >= 180 && len < 200) {
-            charCounter.className = 'char-counter-text warning';
-          } else if (len >= 200) {
-            charCounter.className = 'char-counter-text danger';
-          } else {
-            charCounter.className = 'char-counter-text';
-          }
-        }
-      }
-
-      // Pre-select Mood pill
-      const moodPills = document.querySelectorAll('#mood-pills-wrapper .mood-pill');
-      const customMoodInput = document.getElementById('input-entry-custom-mood') as HTMLInputElement;
-      
-      let matchedPill = false;
-      moodPills.forEach(pill => {
-        const moodVal = pill.getAttribute('data-mood');
-        if (moodVal === entry.mood) {
-          pill.classList.add('active');
-          matchedPill = true;
-        } else {
-          pill.classList.remove('active');
-        }
-      });
-
-      if (entry.mood && !matchedPill) {
-        // It's a custom mood
-        const customPill = document.getElementById('mood-pill-custom');
-        if (customPill) customPill.classList.add('active');
-        if (customMoodInput) {
-          customMoodInput.style.display = 'block';
-          customMoodInput.value = entry.mood;
-        }
+  const messageInput = document.getElementById('input-entry-message') as HTMLTextAreaElement;
+  if (messageInput) {
+    messageInput.value = entry.message || '';
+    
+    // Trigger character counter state update
+    const charCounter = document.getElementById('char-counter');
+    if (charCounter) {
+      const len = messageInput.value.length;
+      charCounter.textContent = `${len} / 200`;
+      if (len >= 180 && len < 200) {
+        charCounter.className = 'char-counter-text warning';
+      } else if (len >= 200) {
+        charCounter.className = 'char-counter-text danger';
       } else {
-        if (customMoodInput) {
-          customMoodInput.style.display = 'none';
-          customMoodInput.value = '';
-        }
+        charCounter.className = 'char-counter-text';
       }
+    }
+  }
 
-      // Uncheck checkboxes for consent re-verification
-      const consentModeration = document.getElementById('checkbox-consent-moderation') as HTMLInputElement;
-      const consentStorage = document.getElementById('checkbox-consent-storage') as HTMLInputElement;
-      if (consentModeration) consentModeration.checked = false;
-      if (consentStorage) consentStorage.checked = false;
-
-      // Update headers for replacement context
-      const title = document.getElementById('create-entry-title');
-      if (title) title.textContent = 'Replace Submission';
-
-      const subtitle = document.getElementById('create-entry-subtitle');
-      if (subtitle) subtitle.textContent = `Update your message, mood, or photo for re-review (Attempt ${entry.reupload_attempts + 1} of 3).`;
-
-      const submitBtn = document.getElementById('btn-submit-entry') as HTMLButtonElement;
-      if (submitBtn) {
-        submitBtn.disabled = true; // Requires new consent checks
-        submitBtn.textContent = 'Submit Replacement';
-      }
-
-      // Switch to the create-entry panel view
-      showView('create-entry');
-    });
+  // Pre-select Mood pill
+  const moodPills = document.querySelectorAll('#mood-pills-wrapper .mood-pill');
+  const customMoodInput = document.getElementById('input-entry-custom-mood') as HTMLInputElement;
+  
+  let matchedPill = false;
+  moodPills.forEach(pill => {
+    const moodVal = pill.getAttribute('data-mood');
+    if (moodVal === entry.mood) {
+      pill.classList.add('active');
+      matchedPill = true;
+    } else {
+      pill.classList.remove('active');
+    }
   });
 
-  // 3. Edit Actions (Pending entries)
-  const editButtons = container.querySelectorAll('.btn-edit');
-  editButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const button = e.currentTarget as HTMLButtonElement;
-      const entryId = button.getAttribute('data-id');
-      if (!entryId) return;
+  if (entry.mood && !matchedPill) {
+    // It's a custom mood
+    const customPill = document.getElementById('mood-pill-custom');
+    if (customPill) customPill.classList.add('active');
+    if (customMoodInput) {
+      customMoodInput.style.display = 'block';
+      customMoodInput.value = entry.mood;
+    }
+  } else {
+    if (customMoodInput) {
+      customMoodInput.style.display = 'none';
+      customMoodInput.value = '';
+    }
+  }
 
-      // Find the existing pending entry in userEntries
-      const entry = userEntries.find(ent => ent.id === entryId);
-      if (!entry) {
-        alert('Could not find entry records.');
-        return;
-      }
+  // Uncheck checkboxes for consent re-verification
+  const consentModeration = document.getElementById('checkbox-consent-moderation') as HTMLInputElement;
+  const consentStorage = document.getElementById('checkbox-consent-storage') as HTMLInputElement;
+  if (consentModeration) consentModeration.checked = false;
+  if (consentStorage) consentStorage.checked = false;
 
-      // Set the hidden input value to mark this form as an edit request
-      const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
-      if (replacementInput) {
-        replacementInput.value = entry.id;
-        replacementInput.dataset.mode = 'edit';
-      }
+  // Update headers for replacement context
+  const title = document.getElementById('create-entry-title');
+  if (title) title.textContent = 'Replace Submission';
 
-      // Pre-fill publicity checkbox
-      const isPublicCheckbox = document.getElementById('checkbox-is-public') as HTMLInputElement;
-      if (isPublicCheckbox) {
-        isPublicCheckbox.checked = !!entry.is_public;
-      }
+  const subtitle = document.getElementById('create-entry-subtitle');
+  if (subtitle) subtitle.textContent = `Update your message, mood, or photo for re-review (Attempt ${entry.reupload_attempts + 1} of 3).`;
 
-      // Pre-fill fields
-      const nameInput = document.getElementById('input-entry-name') as HTMLInputElement;
-      if (nameInput) nameInput.value = entry.original_name || '';
+  const submitBtn = document.getElementById('btn-submit-entry') as HTMLButtonElement;
+  if (submitBtn) {
+    submitBtn.disabled = true; // Requires new consent checks
+    submitBtn.textContent = 'Submit Replacement';
+  }
 
-      const messageInput = document.getElementById('input-entry-message') as HTMLTextAreaElement;
-      if (messageInput) {
-        messageInput.value = entry.message || '';
-        
-        // Trigger character counter state update
-        const charCounter = document.getElementById('char-counter');
-        if (charCounter) {
-          const len = messageInput.value.length;
-          charCounter.textContent = `${len} / 200`;
-          if (len >= 180 && len < 200) {
-            charCounter.className = 'char-counter-text warning';
-          } else if (len >= 200) {
-            charCounter.className = 'char-counter-text danger';
-          } else {
-            charCounter.className = 'char-counter-text';
-          }
-        }
-      }
+  // Switch to the create-entry panel view
+  showView('create-entry');
+}
 
-      // Pre-select Mood pill
-      const moodPills = document.querySelectorAll('#mood-pills-wrapper .mood-pill');
-      const customMoodInput = document.getElementById('input-entry-custom-mood') as HTMLInputElement;
-      
-      let matchedPill = false;
-      moodPills.forEach(pill => {
-        const moodVal = pill.getAttribute('data-mood');
-        if (moodVal === entry.mood) {
-          pill.classList.add('active');
-          matchedPill = true;
-        } else {
-          pill.classList.remove('active');
-        }
-      });
+/**
+ * Triggers the edit flow for a pending entry.
+ */
+function triggerEditAction(entry: any) {
+  // Set the hidden input value to mark this form as an edit request
+  const replacementInput = document.getElementById('input-entry-replacement-id') as HTMLInputElement;
+  if (replacementInput) {
+    replacementInput.value = entry.id;
+    replacementInput.dataset.mode = 'edit';
+  }
 
-      if (entry.mood && !matchedPill) {
-        // It's a custom mood
-        const customPill = document.getElementById('mood-pill-custom');
-        if (customPill) customPill.classList.add('active');
-        if (customMoodInput) {
-          customMoodInput.style.display = 'block';
-          customMoodInput.value = entry.mood;
-        }
+  // Pre-fill publicity checkbox
+  const isPublicCheckbox = document.getElementById('checkbox-is-public') as HTMLInputElement;
+  if (isPublicCheckbox) {
+    isPublicCheckbox.checked = !!entry.is_public;
+  }
+
+  // Pre-fill fields
+  const nameInput = document.getElementById('input-entry-name') as HTMLInputElement;
+  if (nameInput) nameInput.value = entry.original_name || '';
+
+  const messageInput = document.getElementById('input-entry-message') as HTMLTextAreaElement;
+  if (messageInput) {
+    messageInput.value = entry.message || '';
+    
+    // Trigger character counter state update
+    const charCounter = document.getElementById('char-counter');
+    if (charCounter) {
+      const len = messageInput.value.length;
+      charCounter.textContent = `${len} / 200`;
+      if (len >= 180 && len < 200) {
+        charCounter.className = 'char-counter-text warning';
+      } else if (len >= 200) {
+        charCounter.className = 'char-counter-text danger';
       } else {
-        if (customMoodInput) {
-          customMoodInput.style.display = 'none';
-          customMoodInput.value = '';
-        }
+        charCounter.className = 'char-counter-text';
       }
+    }
+  }
 
-      // Uncheck checkboxes for consent re-verification
-      const consentModeration = document.getElementById('checkbox-consent-moderation') as HTMLInputElement;
-      const consentStorage = document.getElementById('checkbox-consent-storage') as HTMLInputElement;
-      if (consentModeration) consentModeration.checked = false;
-      if (consentStorage) consentStorage.checked = false;
-
-      // Update headers for edit context
-      const title = document.getElementById('create-entry-title');
-      if (title) title.textContent = 'Edit Submission';
-
-      const subtitle = document.getElementById('create-entry-subtitle');
-      if (subtitle) subtitle.textContent = 'Update your message, mood, or photo for your pending submission.';
-
-      const submitBtn = document.getElementById('btn-submit-entry') as HTMLButtonElement;
-      if (submitBtn) {
-        submitBtn.disabled = true; // Requires new consent checks
-        submitBtn.textContent = 'Save Changes';
-      }
-
-      // Switch to the create-entry panel view
-      showView('create-entry');
-    });
+  // Pre-select Mood pill
+  const moodPills = document.querySelectorAll('#mood-pills-wrapper .mood-pill');
+  const customMoodInput = document.getElementById('input-entry-custom-mood') as HTMLInputElement;
+  
+  let matchedPill = false;
+  moodPills.forEach(pill => {
+    const moodVal = pill.getAttribute('data-mood');
+    if (moodVal === entry.mood) {
+      pill.classList.add('active');
+      matchedPill = true;
+    } else {
+      pill.classList.remove('active');
+    }
   });
 
-  // 4. Delete Actions (Individual entries)
-  const deleteButtons = container.querySelectorAll('.btn-delete-individual');
-  deleteButtons.forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const button = e.currentTarget as HTMLButtonElement;
-      const entryId = button.getAttribute('data-id');
-      if (!entryId) return;
+  if (entry.mood && !matchedPill) {
+    // It's a custom mood
+    const customPill = document.getElementById('mood-pill-custom');
+    if (customPill) customPill.classList.add('active');
+    if (customMoodInput) {
+      customMoodInput.style.display = 'block';
+      customMoodInput.value = entry.mood;
+    }
+  } else {
+    if (customMoodInput) {
+      customMoodInput.style.display = 'none';
+      customMoodInput.value = '';
+    }
+  }
 
-      const entry = userEntries.find(ent => ent.id === entryId);
-      const selfieUrl = entry ? entry.selfie_url : null;
+  // Uncheck checkboxes for consent re-verification
+  const consentModeration = document.getElementById('checkbox-consent-moderation') as HTMLInputElement;
+  const consentStorage = document.getElementById('checkbox-consent-storage') as HTMLInputElement;
+  if (consentModeration) consentModeration.checked = false;
+  if (consentStorage) consentStorage.checked = false;
 
-      const confirmed = await showConfirm(
-        'Are you sure you want to delete this guestbook entry permanently? This action is irreversible.',
-        'Delete Entry'
-      );
-      if (!confirmed) return;
+  // Update headers for edit context
+  const title = document.getElementById('create-entry-title');
+  if (title) title.textContent = 'Edit Submission';
 
-      try {
-        button.disabled = true;
-        button.textContent = 'Deleting...';
-        await deleteGuestbookEntry(entryId, selfieUrl);
-        alert('Entry deleted successfully.');
-        await loadUserDashboard();
-      } catch (err: any) {
-        console.error(err);
-        alert(`Failed to delete entry: ${err.message || 'Database error'}`);
-        button.disabled = false;
-        button.textContent = 'Delete Entry';
-      }
-    });
-  });
+  const subtitle = document.getElementById('create-entry-subtitle');
+  if (subtitle) subtitle.textContent = 'Update your message, mood, or photo for your pending submission.';
+
+  const submitBtn = document.getElementById('btn-submit-entry') as HTMLButtonElement;
+  if (submitBtn) {
+    submitBtn.disabled = true; // Requires new consent checks
+    submitBtn.textContent = 'Save Changes';
+  }
+
+  // Switch to the create-entry panel view
+  showView('create-entry');
 }
 
 /**
@@ -1303,16 +1146,11 @@ async function renderPublicFeed() {
         loadCardSelfie(card, entry.selfie_url);
       }
 
-      // Open detail modal when clicking anywhere on the card (except download button)
-      card.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('.btn-download')) return;
-        openMemoryDetailModal(entry);
+      // Open detail modal when clicking anywhere on the card
+      card.addEventListener('click', () => {
+        openMemoryDetailModal(entry, false);
       });
     });
-
-    // Bind action listeners (like download actions) for dynamically rendered elements
-    bindDashboardActionListeners(feedList);
 
   } catch (err) {
     console.error('Failed to load public feed:', err);
@@ -1332,7 +1170,10 @@ async function renderPublicFeed() {
 /**
  * Opens the memory detail modal for public entries.
  */
-async function openMemoryDetailModal(entry: any) {
+/**
+ * Opens the memory detail modal for both dashboard and public entries.
+ */
+async function openMemoryDetailModal(entry: any, isDashboardContext: boolean = false) {
   const modal = document.getElementById('memory-detail-modal');
   const modalImg = document.getElementById('memory-modal-image') as HTMLImageElement;
   const modalSpinner = document.getElementById('memory-modal-spinner');
@@ -1340,7 +1181,9 @@ async function openMemoryDetailModal(entry: any) {
   const modalDate = document.getElementById('memory-modal-date');
   const modalMood = document.getElementById('memory-modal-mood');
   const modalMessage = document.getElementById('memory-modal-message');
-  const downloadBtn = document.getElementById('memory-modal-download-btn') as HTMLButtonElement;
+  const modalBadges = document.getElementById('memory-modal-badges');
+  const modalRejectionBox = document.getElementById('memory-modal-rejection-box');
+  const modalActions = document.getElementById('memory-modal-actions');
 
   if (!modal) return;
 
@@ -1367,45 +1210,217 @@ async function openMemoryDetailModal(entry: any) {
     }
   }
 
-  // Setup download action on click
-  if (downloadBtn) {
-    if (entry.selfie_url) {
-      downloadBtn.style.display = 'inline-flex';
-      downloadBtn.onclick = async (e) => {
-        e.stopPropagation();
-        try {
-          downloadBtn.disabled = true;
-          const signedUrl = await getSignedSelfieUrl(entry.selfie_url);
-          if (signedUrl) {
-            try {
-              const response = await fetch(signedUrl);
-              const blob = await response.blob();
-              const blobUrl = URL.createObjectURL(blob);
-              const filename = entry.selfie_url.split('/').pop() || 'selfie.jpg';
-              
-              const link = document.createElement('a');
-              link.href = blobUrl;
-              link.download = filename;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              URL.revokeObjectURL(blobUrl);
-            } catch (fetchErr) {
-              console.error('Fetch download failed, falling back to tab:', fetchErr);
-              window.open(signedUrl, '_blank');
+  // Dashboard status / visibility badges
+  if (modalBadges) {
+    if (isDashboardContext) {
+      let statusText = 'Pending Review';
+      let statusClass = 'pending';
+      if (entry.status === 'approved') {
+        statusText = 'Approved';
+        statusClass = 'approved';
+      } else if (entry.status === 'rejected') {
+        statusText = 'Rejected';
+        statusClass = 'rejected';
+      }
+
+      const visibilityText = entry.is_public ? 'Public' : 'Private';
+      const visibilityClass = entry.is_public ? 'public' : 'private';
+
+      modalBadges.innerHTML = `
+        <div class="entry-visibility-badge ${visibilityClass}" style="padding: 2px 8px; font-size: 0.68rem;">
+          <span class="visibility-dot"></span>
+          <span class="visibility-text">${visibilityText}</span>
+        </div>
+        <div class="entry-status-badge ${statusClass}" style="padding: 2px 8px; font-size: 0.68rem;">
+          <span class="status-dot"></span>
+          <span class="status-text">${statusText}</span>
+        </div>
+      `;
+      modalBadges.style.display = 'flex';
+    } else {
+      modalBadges.style.display = 'none';
+    }
+  }
+
+  // Dashboard rejection reason box
+  if (modalRejectionBox) {
+    if (isDashboardContext && entry.status === 'rejected') {
+      const reasonMap: Record<string, string> = {
+        unclear_photo: 'Unclear Photo',
+        inappropriate_content: 'Inappropriate Content',
+        image_not_visitor: 'Image does not show visitor',
+        duplicate_submission: 'Duplicate Submission',
+        spam_submission: 'Spam/Abuse Submission',
+        other: 'Other'
+      };
+      const friendlyReason = reasonMap[entry.rejection_reason] || 'Moderator Decision';
+      const customDetail = entry.custom_rejection_reason ? `: ${entry.custom_rejection_reason}` : '';
+      
+      modalRejectionBox.innerHTML = `
+        <div class="rejection-reason-box" style="margin: 0; font-size: 0.82rem;">
+          Reason: <strong>${friendlyReason}${customDetail}</strong>
+        </div>
+      `;
+      modalRejectionBox.style.display = 'block';
+    } else {
+      modalRejectionBox.style.display = 'none';
+    }
+  }
+
+  // Setup dynamic actions / buttons
+  if (modalActions) {
+    modalActions.innerHTML = '';
+
+    if (isDashboardContext) {
+      // 1. Download Photo button
+      if (entry.status === 'approved' && entry.selfie_url) {
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'btn-download btn-text-action';
+        downloadBtn.style.padding = '8px 16px';
+        downloadBtn.style.fontSize = '0.82rem';
+        downloadBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Photo
+        `;
+        downloadBtn.onclick = async (e) => {
+          e.stopPropagation();
+          try {
+            downloadBtn.disabled = true;
+            const signedUrl = await getSignedSelfieUrl(entry.selfie_url);
+            if (signedUrl) {
+              try {
+                const response = await fetch(signedUrl);
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const filename = entry.selfie_url.split('/').pop() || 'selfie.jpg';
+                
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+              } catch (fetchErr) {
+                console.error('Fetch download failed, falling back to tab:', fetchErr);
+                window.open(signedUrl, '_blank');
+              }
+            } else {
+              alert('Could not download image.');
             }
-          } else {
-            alert('Could not download image.');
+          } catch (err) {
+            console.error(err);
+          } finally {
+            downloadBtn.disabled = false;
           }
-        } catch (err) {
+        };
+        modalActions.appendChild(downloadBtn);
+      }
+
+      // 2. Replace Submission button
+      if (entry.status === 'rejected' && entry.reupload_attempts < 3) {
+        const replaceBtn = document.createElement('button');
+        replaceBtn.className = 'btn-replace btn-action-pill';
+        replaceBtn.textContent = `Replace Submission (${entry.reupload_attempts}/3)`;
+        replaceBtn.onclick = () => {
+          modal.style.display = 'none';
+          triggerReplaceAction(entry);
+        };
+        modalActions.appendChild(replaceBtn);
+      }
+
+      // 3. Edit Details button
+      if (entry.status === 'pending') {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn-edit btn-action-pill';
+        editBtn.textContent = 'Edit Details';
+        editBtn.onclick = () => {
+          modal.style.display = 'none';
+          triggerEditAction(entry);
+        };
+        modalActions.appendChild(editBtn);
+      }
+
+      // 4. Delete Entry button (red action pill)
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn-delete-individual btn-action-pill danger';
+      deleteBtn.textContent = 'Delete Entry';
+      deleteBtn.onclick = async () => {
+        const confirmed = await showConfirm(
+          'Are you sure you want to delete this guestbook entry permanently? This action is irreversible.',
+          'Delete Entry'
+        );
+        if (!confirmed) return;
+
+        try {
+          deleteBtn.disabled = true;
+          deleteBtn.textContent = 'Deleting...';
+          await deleteGuestbookEntry(entry.id, entry.selfie_url);
+          modal.style.display = 'none';
+          alert('Entry deleted successfully.');
+          await loadUserDashboard();
+        } catch (err: any) {
           console.error(err);
-        } finally {
-          downloadBtn.disabled = false;
+          alert(`Failed to delete entry: ${err.message || 'Database error'}`);
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = 'Delete Entry';
         }
       };
+      modalActions.appendChild(deleteBtn);
+
     } else {
-      downloadBtn.style.display = 'none';
-      downloadBtn.onclick = null;
+      // Public view context: only show download if approved and selfie exists
+      if (entry.status === 'approved' && entry.selfie_url) {
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'btn-download btn-text-action';
+        downloadBtn.style.padding = '8px 16px';
+        downloadBtn.style.fontSize = '0.82rem';
+        downloadBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Photo
+        `;
+        downloadBtn.onclick = async (e) => {
+          e.stopPropagation();
+          try {
+            downloadBtn.disabled = true;
+            const signedUrl = await getSignedSelfieUrl(entry.selfie_url);
+            if (signedUrl) {
+              try {
+                const response = await fetch(signedUrl);
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const filename = entry.selfie_url.split('/').pop() || 'selfie.jpg';
+                
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+              } catch (fetchErr) {
+                console.error('Fetch download failed, falling back to tab:', fetchErr);
+                window.open(signedUrl, '_blank');
+              }
+            } else {
+              alert('Could not download image.');
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
+            downloadBtn.disabled = false;
+          }
+        };
+        modalActions.appendChild(downloadBtn);
+      }
     }
   }
 
@@ -1463,32 +1478,21 @@ function createPublicEntryCard(entry: any): HTMLElement {
       </div>
     </div>
     
-    <div class="entry-card-body">
+    <div class="entry-card-body" style="flex-grow: 1;">
       ${entry.selfie_url ? `
         <div class="entry-selfie-frame">
           <div class="selfie-loader-spinner"></div>
           <img class="entry-selfie" alt="Selfie Memory" style="display: none;" />
         </div>
-      ` : ''}
-      <p class="entry-message">"${escapeHtml(entry.message)}"</p>
-    </div>
-    
-    <div class="entry-card-footer">
-      <div class="entry-footer-left">
-        ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : ''}
-      </div>
-      <div class="entry-footer-right">
-        ${entry.status === 'approved' && entry.selfie_url ? `
-          <button class="btn-download btn-text-action" data-path="${entry.selfie_url}" aria-label="Download Photo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Download Photo
-          </button>
-        ` : ''}
-      </div>
+      ` : `
+        <div class="entry-selfie-frame" style="display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.02); min-height: 120px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3;">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span style="font-size: 0.82rem; opacity: 0.4; margin-left: 8px;">Text memory</span>
+        </div>
+      `}
     </div>
   `;
   return card;
