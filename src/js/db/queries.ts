@@ -278,7 +278,7 @@ async function moderateGuestbookEntry(
 /**
  * Deletes a guestbook entry (admin only or owner during account purge).
  */
-async function deleteGuestbookEntry(entryId: string) {
+async function deleteGuestbookEntry(entryId: string, selfieUrl?: string | null) {
   if (!supabase) {
     throw new Error('Supabase client is not configured.');
   }
@@ -291,6 +291,19 @@ async function deleteGuestbookEntry(entryId: string) {
   if (error) {
     console.error('Error deleting entry:', error);
     throw error;
+  }
+
+  if (selfieUrl) {
+    try {
+      const { error: storageError } = await supabase.storage
+        .from('selfies')
+        .remove([selfieUrl]);
+      if (storageError) {
+        console.error('Error deleting selfie from storage:', storageError);
+      }
+    } catch (err) {
+      console.error('Failed to remove selfie from storage:', err);
+    }
   }
 }
 

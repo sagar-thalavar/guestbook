@@ -976,6 +976,18 @@ select option {
   border-color: var(--accent);
 }
 
+.btn-action-pill.danger {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btn-action-pill.danger:hover {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
 /* Loading/spinner states */
 .writings-state-container {
   display: flex;

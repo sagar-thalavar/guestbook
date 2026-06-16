@@ -352,7 +352,7 @@ function createEntryCard(entry: any): HTMLElement {
       <div class="entry-footer-left">
         ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : ''}
       </div>
-      <div class="entry-footer-right">
+      <div class="entry-footer-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
         ${entry.status === 'approved' && entry.selfie_url ? `
           <button class="btn-download btn-text-action" data-path="${entry.selfie_url}" aria-label="Download Photo">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -373,6 +373,9 @@ function createEntryCard(entry: any): HTMLElement {
             Edit Details
           </button>
         ` : ''}
+        <button class="btn-delete-individual btn-action-pill danger" data-id="${entry.id}">
+          Delete Entry
+        </button>
       </div>
     </div>
   `;
@@ -669,6 +672,38 @@ function bindDashboardActionListeners(container: HTMLElement) {
 
       // Switch to the create-entry panel view
       showView('create-entry');
+    });
+  });
+
+  // 4. Delete Actions (Individual entries)
+  const deleteButtons = container.querySelectorAll('.btn-delete-individual');
+  deleteButtons.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const entryId = button.getAttribute('data-id');
+      if (!entryId) return;
+
+      const entry = userEntries.find(ent => ent.id === entryId);
+      const selfieUrl = entry ? entry.selfie_url : null;
+
+      const confirmed = await showConfirm(
+        'Are you sure you want to delete this guestbook entry permanently? This action is irreversible.',
+        'Delete Entry'
+      );
+      if (!confirmed) return;
+
+      try {
+        button.disabled = true;
+        button.textContent = 'Deleting...';
+        await deleteGuestbookEntry(entryId, selfieUrl);
+        alert('Entry deleted successfully.');
+        await loadUserDashboard();
+      } catch (err: any) {
+        console.error(err);
+        alert(`Failed to delete entry: ${err.message || 'Database error'}`);
+        button.disabled = false;
+        button.textContent = 'Delete Entry';
+      }
     });
   });
 }
