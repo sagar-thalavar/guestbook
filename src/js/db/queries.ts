@@ -9,9 +9,15 @@ async function fetchUserEntries() {
     throw new Error('Supabase client is not configured.');
   }
 
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('User session not found.');
+  }
+
   const { data, error } = await supabase
     .from('guestbook_entries')
     .select('*')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) {
