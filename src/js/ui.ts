@@ -1,4 +1,4 @@
-import { hasValidConfig } from './db/supabaseClient';
+import { supabase, hasValidConfig } from './db/supabaseClient';
 import { showConfirm } from './dialog';
 import { 
   fetchUserEntries, 
@@ -249,6 +249,17 @@ async function loadUserDashboard() {
 
   } catch (error: any) {
     console.error('Error rendering dashboard:', error);
+    
+    // Auto-recovery for expired/missing user sessions
+    if (error.message && error.message.includes('User session not found')) {
+      alert('Your session has expired. Please sign in again.');
+      if (supabase) {
+        await supabase.auth.signOut().catch(() => {});
+      }
+      showView('welcome');
+      return;
+    }
+
     entriesListContainer.innerHTML = `
       <div class="writings-state-container error">
         <svg class="error-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
