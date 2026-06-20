@@ -1131,6 +1131,10 @@ select option {
 
 /* --- Responsiveness --- */
 @media (max-width: 1024px) {
+  .grid-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
   .dashboard-sections-grid {
     grid-template-columns: 1fr;
     gap: 20px;
