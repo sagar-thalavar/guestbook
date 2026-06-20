@@ -1249,9 +1249,15 @@ select option {
   }
 
   /* Responsive Admin Tabs */
+  .admin-tabs-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
   .admin-tab-btn {
     padding: 8px 12px;
     font-size: 0.82rem;
+    flex: 1 1 auto;
+    justify-content: center;
   }
   .tab-badge {
     margin-left: 4px;
