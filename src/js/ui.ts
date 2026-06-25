@@ -469,8 +469,8 @@ function createEntryCard(entry: any): HTMLElement {
         <p class="entry-message">"${escapeHtml(entry.message)}"</p>
         ${statusDescription}
 
-        <div class="entry-card-footer" style="margin-top: 0; padding-top: 0; border-top: none; justify-content: space-between; align-items: center; display: flex;">
-          <div class="entry-footer-left">
+        <div class="entry-card-footer" style="margin-top: 0; padding-top: 0; border-top: none; justify-content: space-between; align-items: center; display: flex; flex-wrap: wrap; gap: 12px;">
+          <div class="entry-footer-left" style="flex-shrink: 0;">
             ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : ''}
           </div>
           <div class="entry-footer-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -1403,8 +1403,8 @@ function createPublicEntryCard(entry: any): HTMLElement {
       <div class="entry-details-collapsed">
         <p class="entry-message">"${escapeHtml(entry.message)}"</p>
         
-        <div class="entry-card-footer" style="margin-top: 0; padding-top: 0; border-top: none; justify-content: space-between; align-items: center; display: flex;">
-          <div class="entry-footer-left">
+        <div class="entry-card-footer" style="margin-top: 0; padding-top: 0; border-top: none; justify-content: space-between; align-items: center; display: flex; flex-wrap: wrap; gap: 12px;">
+          <div class="entry-footer-left" style="flex-shrink: 0;">
             ${entry.mood ? `<span class="tag-pill">${escapeHtml(entry.mood)}</span>` : ''}
           </div>
           <div class="entry-footer-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
