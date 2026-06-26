@@ -11,8 +11,18 @@
   <!-- Google Fonts (Matching Portfolio) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+  <!-- Non-blocking font load: page renders immediately, fonts swap in when ready -->
+  <link
+    id="font-preload"
+    rel="preload"
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    as="style"
+  >
+  <script src="/font-loader.js"></script>
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  </noscript>
+
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="/src/css/main.css">
 </head>
