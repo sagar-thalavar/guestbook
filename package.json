@@ -6,12 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:lighthouse": "lhci autorun"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.4"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.61.1",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
   }

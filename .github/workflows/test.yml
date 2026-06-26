@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm install
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://example.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'test-anon-key' }}
+        run: npm run build
+
+      - run: npm run test:e2e
+
+      - name: Run Lighthouse CI
+        run: npm run test:lighthouse
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

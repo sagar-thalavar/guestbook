@@ -25,3 +25,8 @@ implementation_plan.md
 # OS files
 .DS_Store
 Thumbs.db
+
+# Testing
+playwright-report
+test-results
+.lighthouseci
